@@ -571,3 +571,9 @@ Validación: `npm run check` en verde (963 pruebas); el script de contrato se pr
 Decisión: D102–D103. Las funciones C1–C4 son solo del API; la app no cambió por ellas.
 Rechazos/correcciones: una prueba creaba una labor con cantidad negativa en SQLite (la base lo impide); se dividió el archivo de pruebas que pasó de 300 líneas.
 
+## 2026-11-16 · Sesión 21 · APK con A1–D4
+Propósito: nuevo APK de prueba con todas las funciones nuevas contra la API ya desplegada.
+Evidencia: `app.json` con `versionCode` 2 (para actualizar el APK anterior); build de EAS `af34d6b9-4982-4941-acb6-8c5a9946e64d`, perfil `preview`, lanzado con `EAS_NO_VCS=1` por orden de Brayan.
+Validación: la API de producción se verificó el mismo día (ver la bitácora de la API). El resultado del build y la prueba del APK en los teléfonos se anotan cuando terminen.
+Decisión: sin cambios de código en la app.
+
