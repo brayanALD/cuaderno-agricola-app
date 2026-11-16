@@ -79,6 +79,12 @@ export function formatearMes(mes: string): string {
   return `${MESES[numero - 1] ?? ''} de ${anio}`;
 }
 
+/** `2026-10` → «oct» (el eje del gráfico de producción; el nombre completo lo lee el lector de pantalla). */
+export function mesCorto(mes: string): string {
+  const [, numero] = partes(`${mes}-01`);
+  return (MESES[numero - 1] ?? '').slice(0, 3);
+}
+
 /** Fecha del calendario local del dispositivo (no la de UTC) como `AAAA-MM-DD`. */
 export function fechaLocalISO(fecha: Date): string {
   const anio = String(fecha.getFullYear()).padStart(4, '0');

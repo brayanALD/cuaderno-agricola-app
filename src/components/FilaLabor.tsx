@@ -1,25 +1,18 @@
 import { useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { GestureDetector, useLongPressGesture } from 'react-native-gesture-handler';
-import type { LaborFila, TipoLabor } from '@/db/modelo';
+import type { LaborFila } from '@/db/modelo';
 import { formatearCantidad } from '@/services/cantidad';
 import { ETIQUETA_LUZ, ETIQUETA_TIPO } from '@/services/etiquetas';
 import { formatearFecha } from '@/services/fechas';
 import { AvisoDeSync } from './AvisoDeSync';
 import { descripcionDeEstado, EstadoDeFila } from './EstadoDeFila';
-import { BotonIcono } from './BotonIcono';
-import { Icono, type NombreIcono } from './Icono';
+import { Icono } from './Icono';
+import { ICONO_TIPO } from './iconosDeLabor';
 import { Insignia } from './Insignia';
+import { MenuDeAcciones } from './MenuDeAcciones';
 import { Tarjeta } from './Tarjeta';
 import { Texto } from './Texto';
-
-const ICONO_TIPO: Readonly<Record<TipoLabor, NombreIcono>> = {
-  riego: 'water-outline',
-  abono: 'flask-outline',
-  fumigacion: 'color-wand-outline',
-  poda: 'cut-outline',
-  cosecha: 'basket-outline',
-};
 
 /** Medio segundo: lo bastante largo para no duplicar sin querer al tocar o desplazar. */
 export const DURACION_MANTENER_MS = 500;
@@ -39,10 +32,60 @@ interface CuerpoProps {
   readonly resumen: string;
   readonly nombreDeLote?: string;
   readonly alEditar: (id: string) => void;
+  readonly alDuplicar: (id: string) => void;
+  readonly alBorrar: (id: string) => void;
+}
+
+/** Acciones del lector de pantalla: duplicar y borrar sin gestos ni menús (WCAG 2.5.1). */
+const ACCIONES_ACCESIBLES = [
+  { name: 'duplicar', label: 'Duplicar con la fecha de hoy' },
+  { name: 'borrar', label: 'Borrar la labor' },
+] as const;
+
+/** Tipo, cantidad, fecha, lote, nota, luz y estado de sincronización de una labor. */
+function TextosDeLabor({
+  labor,
+  cantidad,
+  nombreDeLote,
+}: {
+  labor: LaborFila;
+  cantidad: string | null;
+  nombreDeLote?: string;
+}) {
+  return (
+    <View className="flex-1 gap-0.5">
+      <View className="flex-row items-center gap-2">
+        <Texto variante="etiqueta" className="flex-1">
+          {ETIQUETA_TIPO[labor.tipo]}
+        </Texto>
+        {cantidad ? <Texto variante="etiqueta">{cantidad}</Texto> : null}
+      </View>
+      <Texto variante="ayuda">{formatearFecha(labor.fecha)}</Texto>
+      {nombreDeLote ? <Texto variante="ayuda">Lote: {nombreDeLote}</Texto> : null}
+      {labor.nota ? <Texto>{labor.nota}</Texto> : null}
+      {labor.luz ? (
+        <Insignia
+          tono="neutro"
+          icono={labor.luz === 'soleado' ? 'sunny-outline' : 'cloudy-outline'}
+        >
+          {ETIQUETA_LUZ[labor.luz]}
+        </Insignia>
+      ) : null}
+      <EstadoDeFila pending={labor.pending} syncError={labor.sync_error} />
+      <AvisoDeSync mensaje={labor.sync_error} />
+    </View>
+  );
 }
 
 /** Datos de la labor; tocarlos la edita. */
-function CuerpoDeLabor({ labor, resumen, nombreDeLote, alEditar }: CuerpoProps) {
+function CuerpoDeLabor({
+  labor,
+  resumen,
+  nombreDeLote,
+  alEditar,
+  alDuplicar,
+  alBorrar,
+}: CuerpoProps) {
   const cantidad =
     labor.cantidad > 0 ? `${formatearCantidad(labor.cantidad)} ${labor.unidad ?? ''}`.trim() : null;
   const aviso =
@@ -54,22 +97,18 @@ function CuerpoDeLabor({ labor, resumen, nombreDeLote, alEditar }: CuerpoProps) 
       accessibilityRole="button"
       accessibilityLabel={`${resumen}${cantidad ? `, ${cantidad}` : ''}${aviso}. Editar`}
       accessibilityHint="Mantén presionado para duplicarla con la fecha de hoy"
+      accessibilityActions={ACCIONES_ACCESIBLES.map((accion) => ({ ...accion }))}
+      onAccessibilityAction={(evento) => {
+        if (evento.nativeEvent.actionName === 'duplicar') alDuplicar(labor.id);
+        if (evento.nativeEvent.actionName === 'borrar') alBorrar(labor.id);
+      }}
       onPress={() => alEditar(labor.id)}
-      className="min-h-[48px] gap-1 focus:border-focus"
+      className="min-h-[48px] flex-1 flex-row gap-3 focus:border-focus"
     >
-      <View className="flex-row items-center gap-2">
+      <View className="h-10 w-10 items-center justify-center rounded-xl bg-primary-soft">
         <Icono nombre={ICONO_TIPO[labor.tipo]} tono="primary" />
-        <Texto variante="subtitulo" className="flex-1">
-          {ETIQUETA_TIPO[labor.tipo]}
-        </Texto>
-        {cantidad ? <Texto variante="boton">{cantidad}</Texto> : null}
       </View>
-      <Texto tono="tenue">{formatearFecha(labor.fecha)}</Texto>
-      {nombreDeLote ? <Texto variante="ayuda">Lote: {nombreDeLote}</Texto> : null}
-      {labor.nota ? <Texto>{labor.nota}</Texto> : null}
-      {labor.luz ? <Insignia>{ETIQUETA_LUZ[labor.luz]}</Insignia> : null}
-      <EstadoDeFila pending={labor.pending} syncError={labor.sync_error} />
-      <AvisoDeSync mensaje={labor.sync_error} />
+      <TextosDeLabor labor={labor} cantidad={cantidad} nombreDeLote={nombreDeLote} />
     </Pressable>
   );
 }
@@ -94,7 +133,7 @@ function MiniaturaDeFoto({
       accessibilityRole="imagebutton"
       accessibilityLabel={`Ver la foto de la ${resumen.toLowerCase()}`}
       onPress={alAbrir}
-      className="min-h-[48px] self-start"
+      className="min-h-[48px] min-w-[48px] justify-start"
     >
       {fallida ? (
         <Texto variante="ayuda">Foto no disponible</Texto>
@@ -104,16 +143,38 @@ function MiniaturaDeFoto({
           source={{ uri }}
           onError={() => setFallida(true)}
           accessibilityIgnoresInvertColors
-          className="h-20 w-20 rounded-xl bg-surface-muted"
+          className="h-14 w-14 rounded-xl bg-surface-muted"
         />
       )}
     </Pressable>
   );
 }
 
+/** Duplicar (alternativa visible al gesto) y, aparte y en rojo, borrar. */
+function MenuDeLabor({
+  etiqueta,
+  alDuplicar,
+  alBorrar,
+}: {
+  etiqueta: string;
+  alDuplicar: () => void;
+  alBorrar: () => void;
+}) {
+  return (
+    <MenuDeAcciones
+      etiqueta={etiqueta}
+      acciones={[
+        { titulo: 'Duplicar con la fecha de hoy', icono: 'copy-outline', alPulsar: alDuplicar },
+        { titulo: 'Borrar la labor', icono: 'trash-outline', alPulsar: alBorrar, peligro: true },
+      ]}
+    />
+  );
+}
+
 /**
  * Una labor de la bitácora. Mantener presionada la fila la duplica con la fecha de hoy (gesto de la
- * sección 4); el botón «Duplicar» hace exactamente lo mismo y es la alternativa accesible.
+ * sección 4); su alternativa visible es «Duplicar» en el menú ⋮, y para el lector de pantalla hay acciones
+ * propias. Borrar va en el menú, lejos del resto (D105).
  */
 export function FilaLabor({
   labor,
@@ -133,31 +194,27 @@ export function FilaLabor({
 
   return (
     <GestureDetector gesture={gesto}>
-      <Tarjeta>
-        <CuerpoDeLabor
-          labor={labor}
-          resumen={resumen}
-          nombreDeLote={nombreDeLote}
-          alEditar={alEditar}
-        />
-        {fotoDe(labor) !== null && alVerFoto ? (
-          <MiniaturaDeFoto
-            uri={fotoDe(labor) ?? ''}
+      <Tarjeta className="p-3">
+        <View className="flex-row items-start gap-1">
+          <CuerpoDeLabor
+            labor={labor}
             resumen={resumen}
-            alAbrir={() => alVerFoto(labor.id)}
+            nombreDeLote={nombreDeLote}
+            alEditar={alEditar}
+            alDuplicar={alDuplicar}
+            alBorrar={alBorrar}
           />
-        ) : null}
-        <View className="flex-row justify-end gap-1">
-          <BotonIcono
-            icono="copy-outline"
-            etiqueta={`Duplicar la ${resumen.toLowerCase()} con la fecha de hoy`}
-            onPress={() => alDuplicar(labor.id)}
-          />
-          <BotonIcono
-            icono="trash-outline"
-            tono="danger"
-            etiqueta={`Borrar la ${resumen.toLowerCase()}`}
-            onPress={() => alBorrar(labor.id)}
+          {fotoDe(labor) !== null && alVerFoto ? (
+            <MiniaturaDeFoto
+              uri={fotoDe(labor) ?? ''}
+              resumen={resumen}
+              alAbrir={() => alVerFoto(labor.id)}
+            />
+          ) : null}
+          <MenuDeLabor
+            etiqueta={`Más acciones de la ${resumen.toLowerCase()}`}
+            alDuplicar={() => alDuplicar(labor.id)}
+            alBorrar={() => alBorrar(labor.id)}
           />
         </View>
       </Tarjeta>

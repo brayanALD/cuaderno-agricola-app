@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { View } from 'react-native';
 import { useAcciones } from '@/hooks/useAcciones';
 import type { EntidadConConflicto, Eleccion } from '@/services/conflictoService';
 import { Boton } from './Boton';
+import { Tarjeta } from './Tarjeta';
 import { Texto } from './Texto';
 
 const NOMBRE: Record<EntidadConConflicto, string> = { lote: 'Este lote', labor: 'Esta labor' };
@@ -32,7 +32,7 @@ export function ElegirVersion({
   };
 
   return (
-    <View className="gap-2" accessibilityLiveRegion="polite">
+    <Tarjeta tono="aviso" accessibilityLiveRegion="polite">
       <Texto>
         {NOMBRE[entidad]} se cambió en otro dispositivo mientras tenías cambios sin enviar. Elige
         qué versión conservar:
@@ -40,17 +40,17 @@ export function ElegirVersion({
       <Boton
         titulo="Quedarme con la mía"
         icono="phone-portrait-outline"
-        variante="secundario"
+        variante="tonal"
         deshabilitado={ocupado}
         onPress={() => void elegir('mia')}
       />
       <Boton
         titulo="Usar la del otro dispositivo"
         icono="cloud-download-outline"
-        variante="secundario"
+        variante="tonal"
         deshabilitado={ocupado}
         onPress={() => void elegir('servidor')}
       />
-    </View>
+    </Tarjeta>
   );
 }

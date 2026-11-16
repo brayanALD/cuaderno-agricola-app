@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { esquemaRecuperar, type ValoresRecuperar } from '@/services/formulariosAcceso';
 import type { Resultado } from '@/services/resultado';
 import { Boton } from '../Boton';
-import { MensajeError } from '../MensajeError';
+import { Banner } from '../Banner';
 import { CampoControlado } from './CampoControlado';
 import { aplicarErrores } from './errores';
 
@@ -47,7 +47,7 @@ export function FormularioRecuperar({ alEnviar, alTerminar }: FormularioRecupera
         autoCompletar="email"
         sinCorreccion
       />
-      <MensajeError texto={general ?? undefined} />
+      {general === null ? null : <Banner tono="error" icono="alert-circle" texto={general} />}
       <Boton titulo="Enviar enlace" cargando={isSubmitting} onPress={() => void enviar()} />
     </View>
   );

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
-import { FichaLote } from '@/components/DetalleLote';
+import { FichaLote } from '@/components/FichaLote';
 import { guardarConflicto } from '@/repositories/conflictoRepository';
 import { crearLote, obtenerLote } from '@/services/loteService';
 import { MENSAJE_CONFLICTO } from '@/services/sync/errores';

@@ -17,6 +17,8 @@ export interface SelectorProps<T extends string> {
   /** Pulsar la opción marcada la desmarca (`null`): para campos opcionales como la luz. */
   readonly permitirVacio?: boolean;
   readonly error?: string;
+  /** Las opciones reparten el ancho por igual, en una sola fila (pocas opciones cortas). */
+  readonly igual?: boolean;
 }
 
 /**
@@ -30,6 +32,7 @@ export function Selector<T extends string>({
   onChange,
   permitirVacio = false,
   error,
+  igual = false,
 }: SelectorProps<T>) {
   const elegir = (opcion: T) => {
     if (opcion !== valor) onChange(opcion);
@@ -41,7 +44,7 @@ export function Selector<T extends string>({
       <View
         accessibilityRole="radiogroup"
         accessibilityLabel={etiqueta}
-        className="flex-row flex-wrap gap-2"
+        className={unir('flex-row gap-2', !igual && 'flex-wrap')}
       >
         {opciones.map((opcion) => {
           const activa = opcion.valor === valor;
@@ -54,15 +57,14 @@ export function Selector<T extends string>({
               onPress={() => elegir(opcion.valor)}
               className={unir(
                 'min-h-[48px] flex-row items-center justify-center gap-2 rounded-xl border-2 px-4 focus:border-focus',
+                igual && 'flex-1 px-2',
                 activa
-                  ? 'border-primary bg-primary'
+                  ? 'border-primary bg-primary-soft'
                   : 'border-border bg-surface active:bg-surface-muted',
               )}
             >
-              {activa ? <Icono nombre="checkmark" tamano={20} tono="onPrimary" /> : null}
-              <Texto variante="boton" tono={activa ? 'sobrePrimario' : 'texto'}>
-                {opcion.etiqueta}
-              </Texto>
+              {activa ? <Icono nombre="checkmark" tamano={20} tono="primary" /> : null}
+              <Texto variante="boton">{opcion.etiqueta}</Texto>
             </Pressable>
           );
         })}

@@ -1,7 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { View } from 'react-native';
+import { EsqueletoDeTarjeta } from '@/components/esqueletos';
 import { FormularioCiclo } from '@/components/formularios/FormularioCiclo';
 import { Pantalla } from '@/components/Pantalla';
-import { Texto } from '@/components/Texto';
 import { Vista } from '@/components/Vista';
 import { useAcciones } from '@/hooks/useAcciones';
 import { useHoy } from '@/hooks/useHoy';
@@ -15,9 +16,14 @@ export default function CerrarCiclo() {
   const { cerrarCiclo } = useAcciones();
   const hoy = useHoy();
   return (
-    <Pantalla>
+    <Pantalla desplazable={false} relleno={false}>
       <Vista
         carga={lote}
+        esqueleto={
+          <View className="p-4">
+            <EsqueletoDeTarjeta />
+          </View>
+        }
         vacio={{
           titulo: 'Este lote ya no existe',
           mensaje: 'No se puede cerrar el ciclo de un lote borrado.',
@@ -25,19 +31,13 @@ export default function CerrarCiclo() {
         }}
       >
         {(datos) => (
-          <>
-            <Texto variante="ayuda">
-              Se guardará el ciclo de {datos.cultivo} con los kilos cosechados hasta la fecha de
-              cierre. Las labores se conservan y el lote empieza un ciclo nuevo.
-            </Texto>
-            <FormularioCiclo
-              fechaSiembra={datos.fecha_siembra}
-              cultivoActual={datos.cultivo}
-              hoy={hoy}
-              alGuardar={(cierre) => cerrarCiclo(datos.id, cierre)}
-              alTerminar={() => router.back()}
-            />
-          </>
+          <FormularioCiclo
+            fechaSiembra={datos.fecha_siembra}
+            cultivoActual={datos.cultivo}
+            hoy={hoy}
+            alGuardar={(cierre) => cerrarCiclo(datos.id, cierre)}
+            alTerminar={() => router.back()}
+          />
         )}
       </Vista>
     </Pantalla>

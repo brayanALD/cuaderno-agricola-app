@@ -35,26 +35,37 @@ describe('pestaña Lotes: resumen y estado de sincronización (D99, D100)', () =
   it('con lotes muestra el resumen y el aviso de lo que falta enviar', async () => {
     await montar(() => <PantallaLotes />, true);
 
-    expect(await screen.findByText('Resumen')).toBeTruthy();
+    expect(await screen.findByText('Hoy o vencidas')).toBeTruthy();
     expect(screen.getByLabelText('Cosechado en noviembre de 2026: 12,5 kg')).toBeTruthy();
-    expect(await screen.findByText(/^2 cambios sin enviar\./)).toBeTruthy();
+    expect(await screen.findByText('2 cambios sin enviar')).toBeTruthy();
   });
 
-  it('sin lotes no hay resumen y se explica qué hacer', async () => {
+  it('sin lotes no hay resumen ni botón flotante y se explica qué hacer', async () => {
     await montar(() => <PantallaLotes />, false);
 
     expect(await screen.findByText('Aún no hay lotes')).toBeTruthy();
-    expect(screen.queryByText('Resumen')).toBeNull();
+    expect(screen.queryByText('Hoy o vencidas')).toBeNull();
     expect(screen.queryByText(/sin enviar/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Nuevo lote' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Crear mi primer lote' })).toBeTruthy();
+  });
+
+  it('cada lote dice qué labor le toca, sin abrirlo (D104)', async () => {
+    await montar(() => <PantallaLotes />, true);
+
+    expect(await screen.findByText('Hoy o vencidas')).toBeTruthy();
+    expect(
+      await screen.findByRole('button', { name: /Lote El Mirador, Café, 90 días, próxima labor:/ }),
+    ).toBeTruthy();
   });
 
   it('mientras se busca, el resumen se quita para dejar sitio a los resultados', async () => {
     await montar(() => <PantallaLotes />, true);
-    expect(await screen.findByText('Resumen')).toBeTruthy();
+    expect(await screen.findByText('Hoy o vencidas')).toBeTruthy();
 
     await fireEvent.changeText(screen.getByLabelText('Buscar lote o cultivo'), 'Mirador');
 
-    await waitFor(() => expect(screen.queryByText('Resumen')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('Hoy o vencidas')).toBeNull());
     expect(screen.getByText('El Mirador')).toBeTruthy();
   });
 });
@@ -63,7 +74,7 @@ describe('pestaña Labores: aviso de cambios sin enviar (D99)', () => {
   it('lo muestra cuando hay cambios pendientes', async () => {
     await montar(() => <PantallaLabores />, true);
 
-    expect(await screen.findByText(/^2 cambios sin enviar\./)).toBeTruthy();
+    expect(await screen.findByText('2 cambios sin enviar')).toBeTruthy();
   });
 
   it('sin pendientes no aparece', async () => {

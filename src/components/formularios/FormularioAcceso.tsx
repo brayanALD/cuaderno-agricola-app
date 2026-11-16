@@ -7,7 +7,7 @@ import { valoresAccesoVacios, type ValoresAcceso } from '@/services/formulariosA
 import type { Resultado } from '@/services/resultado';
 import type { DatosAcceso } from '@/services/sesionService';
 import { Boton } from '../Boton';
-import { MensajeError } from '../MensajeError';
+import { Banner } from '../Banner';
 import { CampoControlado } from './CampoControlado';
 import { aplicarErrores } from './errores';
 
@@ -107,7 +107,7 @@ export function FormularioAcceso({
         autoCompletarPassword={autoCompletarPassword}
         conConfirmacion={conConfirmacion}
       />
-      <MensajeError texto={general ?? undefined} />
+      {general === null ? null : <Banner tono="error" icono="alert-circle" texto={general} />}
       <Boton titulo={textoBoton} cargando={isSubmitting} onPress={() => void enviar()} />
     </View>
   );

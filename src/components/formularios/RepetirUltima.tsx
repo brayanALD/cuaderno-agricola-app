@@ -39,7 +39,7 @@ export function RepetirUltima({ control, setValue, ultimas }: Props) {
       <Boton
         titulo={`Repetir la última de ${nombre}`}
         icono="repeat-outline"
-        variante="secundario"
+        variante="tonal"
         onPress={repetir}
       />
       {cantidad === null ? null : (

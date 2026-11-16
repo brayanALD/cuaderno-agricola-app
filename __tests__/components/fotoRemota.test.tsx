@@ -58,7 +58,29 @@ describe('fotos que vienen del servidor (D84)', () => {
 
     await fireEvent(screen.getByTestId('foto-ampliable'), 'error');
 
+    expect(screen.getByText('Foto no disponible')).toBeTruthy();
     expect(screen.getByText('No se pudo cargar la foto. Revisa tu conexión.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Acercar la foto' })).toBeTruthy();
+  });
+
+  it('«Reintentar» vuelve a pedir la foto', async () => {
+    await render(<VisorFoto uri={URL_REMOTA} descripcion="Foto de prueba" />, { wrapper: Raiz });
+    await fireEvent(screen.getByTestId('foto-ampliable'), 'error');
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Reintentar' }));
+
+    expect(screen.getByTestId('foto-ampliable')).toBeTruthy();
+    expect(screen.queryByText('Foto no disponible')).toBeNull();
+  });
+
+  it('mientras carga muestra la silueta y, al llegar, la quita', async () => {
+    await render(<VisorFoto uri={URL_REMOTA} descripcion="Foto de prueba" />, { wrapper: Raiz });
+
+    expect(screen.getByRole('progressbar', { name: 'Cargando' })).toBeTruthy();
+    expect(screen.getByText('Cargando foto…')).toBeTruthy();
+
+    await fireEvent(screen.getByTestId('foto-ampliable'), 'load');
+
+    expect(screen.queryByRole('progressbar', { name: 'Cargando' })).toBeNull();
   });
 });

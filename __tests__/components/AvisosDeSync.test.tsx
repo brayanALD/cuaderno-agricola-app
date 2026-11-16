@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react-native';
 import { AvisoDeSync } from '@/components/AvisoDeSync';
-import { FichaLote } from '@/components/DetalleLote';
+import { FichaLote } from '@/components/FichaLote';
 import { FilaLabor } from '@/components/FilaLabor';
 import { FilaLote } from '@/components/FilaLote';
 import { marcarLoteConError } from '@/repositories/loteRepository';

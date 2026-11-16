@@ -1,13 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { View } from 'react-native';
 import { esquemaFormularioLote, type ValoresLote } from '@/services/formularios';
 import type { Resultado } from '@/services/resultado';
 import type { DatosLote } from '@/services/validacion';
-import { Boton } from '../Boton';
-import { MensajeError } from '../MensajeError';
 import { CamposLote } from './CamposLote';
+import { DisposicionDeFormulario } from './DisposicionDeFormulario';
 import { aplicarErrores } from './errores';
 import { SeccionUbicacion } from './SeccionUbicacion';
 
@@ -60,11 +58,14 @@ export function FormularioLote({
   });
 
   return (
-    <View className="gap-4">
+    <DisposicionDeFormulario
+      textoBoton={textoBoton}
+      cargando={isSubmitting}
+      alGuardar={() => void guardar()}
+      errorGeneral={general}
+    >
       <CamposLote control={control} hoy={hoy} />
       <SeccionUbicacion control={control} setValue={setValue} />
-      <MensajeError texto={general ?? undefined} />
-      <Boton titulo={textoBoton} cargando={isSubmitting} onPress={() => void guardar()} />
-    </View>
+    </DisposicionDeFormulario>
   );
 }

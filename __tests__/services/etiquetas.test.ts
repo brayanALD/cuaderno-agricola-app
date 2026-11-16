@@ -1,10 +1,23 @@
 import {
+  estadoDeVencimiento,
   ETIQUETA_LUZ,
   ETIQUETA_TIPO,
   textoDias,
   textoVencimiento,
   UNIDAD_SUGERIDA,
 } from '@/services/etiquetas';
+
+describe('estadoDeVencimiento (D104)', () => {
+  it.each([
+    [-10, 'vencida'],
+    [-1, 'vencida'],
+    [0, 'hoy'],
+    [1, 'proxima'],
+    [30, 'proxima'],
+  ] as const)('%i días restantes → %s', (dias, estado) => {
+    expect(estadoDeVencimiento(dias)).toBe(estado);
+  });
+});
 
 describe('textoDias (criterio de aceptación 1)', () => {
   it('un lote sembrado hace 90 días dice «90 días»', () => {

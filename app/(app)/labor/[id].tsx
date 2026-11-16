@@ -1,5 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { View } from 'react-native';
 import { ElegirVersion } from '@/components/ElegirVersion';
+import { EsqueletoDeTarjeta } from '@/components/esqueletos';
 import { FormularioLabor } from '@/components/formularios/FormularioLabor';
 import { Pantalla } from '@/components/Pantalla';
 import { Vista } from '@/components/Vista';
@@ -19,6 +21,11 @@ function EditorDeLabor({ labor }: { readonly labor: LaborFila }) {
   return (
     <Vista
       carga={lote}
+      esqueleto={
+        <View className="p-4">
+          <EsqueletoDeTarjeta />
+        </View>
+      }
       vacio={{
         titulo: 'El lote de esta labor ya no existe',
         mensaje: 'No se puede editar una labor de un lote borrado.',
@@ -26,8 +33,12 @@ function EditorDeLabor({ labor }: { readonly labor: LaborFila }) {
       }}
     >
       {(datos) => (
-        <>
-          {labor.conflicto === null ? null : <ElegirVersion entidad="labor" id={labor.id} />}
+        <View className="flex-1">
+          {labor.conflicto === null ? null : (
+            <View className="p-4 pb-0">
+              <ElegirVersion entidad="labor" id={labor.id} />
+            </View>
+          )}
           <FormularioLabor
             // Al elegir la versión del otro dispositivo la labor cambia: el formulario se arma de nuevo con ella.
             key={`${labor.updated_at}:${labor.version_servidor ?? ''}`}
@@ -35,11 +46,12 @@ function EditorDeLabor({ labor }: { readonly labor: LaborFila }) {
             valoresIniciales={valoresDesdeLabor(labor)}
             hoy={hoy}
             carencia={carencia.vista.estado === 'listo' ? carencia.vista.datos : null}
+            lote={{ nombre: datos.nombre, cultivo: datos.cultivo }}
             textoBoton="Guardar cambios"
             alGuardar={(cambios) => actualizarLabor(labor.id, cambios)}
             alTerminar={() => router.back()}
           />
-        </>
+        </View>
       )}
     </Vista>
   );
@@ -49,7 +61,7 @@ export default function EditarLabor() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const labor = useLabor(id);
   return (
-    <Pantalla>
+    <Pantalla desplazable={false} relleno={false}>
       <Vista
         carga={labor}
         vacio={{

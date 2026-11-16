@@ -47,7 +47,8 @@ function BotonesDeFoto({
     <View className="flex-row flex-wrap gap-2">
       <Boton titulo="Tomar foto" icono="camera-outline" variante="secundario" onPress={alTomar} />
       <Boton
-        titulo="Elegir de la galería"
+        titulo="Galería"
+        etiqueta="Elegir de la galería"
         icono="images-outline"
         variante="secundario"
         onPress={alElegir}

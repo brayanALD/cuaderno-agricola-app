@@ -3,6 +3,8 @@ import { unir } from './unir';
 
 /** Tamaño y peso. El color va aparte (`tono`) para que dos clases de color nunca compitan. */
 const VARIANTES = {
+  /** Cifra que se lee de un vistazo (días, kg): 32/36, la jerarquía más alta de una tarjeta. */
+  metrica: 'text-[32px] leading-9 font-bold',
   titulo: 'text-2xl font-bold',
   subtitulo: 'text-lg font-semibold',
   cuerpo: 'text-base',

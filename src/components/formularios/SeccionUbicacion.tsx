@@ -6,8 +6,10 @@ import type { AltitudElegida } from '@/services/altitud';
 import type { ValoresLote } from '@/services/formularios';
 import type { DatosLote } from '@/services/validacion';
 import type { Medicion } from '@/sensors/ubicacion';
+import { Banner } from '../Banner';
 import { Boton } from '../Boton';
 import { Icono } from '../Icono';
+import { Tarjeta } from '../Tarjeta';
 import { Texto } from '../Texto';
 import { CampoControlado } from './CampoControlado';
 
@@ -35,29 +37,40 @@ function useRellenarDesdeUbicacion(
 function MensajesDeUbicacion({ mensaje, aviso }: { mensaje: string | null; aviso: string | null }) {
   return (
     <>
-      {mensaje ? (
-        <View accessible accessibilityRole="alert" className="flex-row items-center gap-1">
-          <Icono nombre="alert-circle" tamano={18} tono="danger" />
-          <Texto variante="error" className="flex-1">
-            {mensaje}
-          </Texto>
-        </View>
-      ) : null}
-      {aviso ? (
-        <View accessible accessibilityLiveRegion="polite" className="flex-row items-center gap-1">
-          <Icono nombre="information-circle" tamano={18} tono="primary" />
-          <Texto variante="ayuda" className="flex-1">
-            {aviso}
-          </Texto>
-        </View>
-      ) : null}
+      {mensaje ? <Banner tono="error" icono="alert-circle" texto={mensaje} /> : null}
+      {aviso ? <Banner icono="information-circle" texto={aviso} /> : null}
     </>
+  );
+}
+
+/** Latitud y longitud lado a lado: se llenan juntas. */
+function Coordenadas({ control }: { readonly control: ControlLote }) {
+  return (
+    <View className="flex-row gap-3">
+      <View className="flex-1">
+        <CampoControlado
+          control={control}
+          name="lat"
+          etiqueta="Latitud"
+          teclado="numbers-and-punctuation"
+        />
+      </View>
+      <View className="flex-1">
+        <CampoControlado
+          control={control}
+          name="lng"
+          etiqueta="Longitud"
+          teclado="numbers-and-punctuation"
+        />
+      </View>
+    </View>
   );
 }
 
 /**
  * RF-02: lote «aquí». El botón mide la ubicación y rellena coordenadas y altitud; los tres campos
- * siguen editables (la alternativa manual) y avisan si la altitud viene del GPS, menos precisa.
+ * siguen editables (la alternativa manual) y avisan si la altitud viene del GPS, menos precisa. Todo junto en
+ * una tarjeta, con latitud y longitud lado a lado (D104).
  */
 export function SeccionUbicacion({
   control,
@@ -70,12 +83,15 @@ export function SeccionUbicacion({
   useRellenarDesdeUbicacion(setValue, medicion, altitud);
 
   return (
-    <View className="gap-3">
-      <Texto variante="subtitulo">Ubicación (opcional)</Texto>
+    <Tarjeta className="gap-3">
+      <View className="flex-row items-center gap-2">
+        <Icono nombre="location-outline" tono="primary" />
+        <Texto variante="subtitulo">Ubicación (opcional)</Texto>
+      </View>
       <Boton
         titulo="Usar mi ubicación"
         icono="locate"
-        variante="secundario"
+        variante="tonal"
         cargando={estado === 'buscando'}
         onPress={() => void obtener()}
       />
@@ -87,18 +103,7 @@ export function SeccionUbicacion({
         teclado="numbers-and-punctuation"
         ayuda="Entre 0 y 6000 m. Déjala vacía si no la conoces."
       />
-      <CampoControlado
-        control={control}
-        name="lat"
-        etiqueta="Latitud"
-        teclado="numbers-and-punctuation"
-      />
-      <CampoControlado
-        control={control}
-        name="lng"
-        etiqueta="Longitud"
-        teclado="numbers-and-punctuation"
-      />
-    </View>
+      <Coordenadas control={control} />
+    </Tarjeta>
   );
 }

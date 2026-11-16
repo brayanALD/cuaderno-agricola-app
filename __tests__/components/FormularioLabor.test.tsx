@@ -53,7 +53,7 @@ async function montar(cambios: Partial<Parameters<typeof FormularioLabor>[0]> = 
 const guardar = () => fireEvent.press(screen.getByRole('button', { name: 'Registrar labor' }));
 
 async function elegirFechaEnCalendario(fecha: Date) {
-  await fireEvent.press(screen.getByRole('button', { name: /Fecha de la labor: .*Cambiar/ }));
+  await fireEvent.press(screen.getByRole('radio', { name: 'Otra fecha' }));
   const [opciones] = DateTimePickerAndroid.open.mock.calls.at(-1) ?? [];
   opciones.onValueChange({}, fecha);
 }
@@ -66,7 +66,10 @@ describe('FormularioLabor', () => {
       checked: true,
     });
     expect(screen.getByText('14 de noviembre de 2026')).toBeTruthy();
-    expect(screen.getByLabelText('Unidad').props.value).toBe('L');
+    expect(screen.getByRole('radio', { name: 'Hoy' }).props.accessibilityState).toMatchObject({
+      checked: true,
+    });
+    expect(screen.getByRole('button', { name: 'Unidad: L. Cambiar' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Quitar foto' })).toBeNull();
   });
 
@@ -74,10 +77,10 @@ describe('FormularioLabor', () => {
     await montar();
 
     await fireEvent.press(screen.getByRole('radio', { name: 'Abono' }));
-    expect(screen.getByLabelText('Unidad').props.value).toBe('kg');
+    expect(screen.getByRole('button', { name: 'Unidad: kg. Cambiar' })).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('radio', { name: 'Cosecha' }));
-    expect(screen.queryByLabelText('Unidad')).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Unidad:/ })).toBeNull();
     expect(screen.getByText('kg')).toBeTruthy();
   });
 
@@ -87,6 +90,7 @@ describe('FormularioLabor', () => {
       await fireEvent.press(screen.getByRole('button', { name: 'Aumentar cantidad' }));
     }
     await fireEvent.changeText(screen.getByLabelText('Nota (opcional)'), '  Goteo  ');
+    await fireEvent.press(screen.getByRole('button', { name: /^Más detalles/ }));
     await fireEvent.press(screen.getByRole('radio', { name: 'Soleado' }));
 
     await guardar();
@@ -144,7 +148,7 @@ describe('FormularioLabor', () => {
 
   it('el calendario no deja elegir días futuros', async () => {
     await montar();
-    await fireEvent.press(screen.getByRole('button', { name: /Fecha de la labor: .*Cambiar/ }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Otra fecha' }));
 
     const [opciones] = DateTimePickerAndroid.open.mock.calls.at(-1) ?? [];
     expect(opciones.maximumDate.getDate()).toBe(14);
@@ -224,5 +228,61 @@ describe('FormularioLabor', () => {
     expect(screen.getByLabelText('Nota (opcional)').props.value).toBe('Bajas');
     expect(screen.getByLabelText('Vista previa de la foto elegida')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeTruthy();
+  });
+
+  it('«Hoy» y «Ayer» eligen la fecha en un toque, sin abrir el calendario', async () => {
+    const { props } = await montar();
+
+    await fireEvent.press(screen.getByRole('radio', { name: 'Ayer' }));
+    expect(screen.getByText('13 de noviembre de 2026')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('radio', { name: 'Hoy' }));
+    expect(screen.getByText('14 de noviembre de 2026')).toBeTruthy();
+    await guardar();
+
+    await waitFor(() => expect(props.alGuardar).toHaveBeenCalled());
+    expect(DateTimePickerAndroid.open).not.toHaveBeenCalled();
+    expect(props.alGuardar).toHaveBeenCalledWith(expect.objectContaining({ fecha: HOY }));
+  });
+
+  it('la unidad se cambia en una hoja: una común o una propia', async () => {
+    const { props } = await montar();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Unidad: L. Cambiar' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'mL' }));
+    expect(screen.getByRole('button', { name: 'Unidad: mL. Cambiar' })).toBeTruthy();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Unidad: mL. Cambiar' }));
+    await fireEvent.changeText(screen.getByLabelText('Otra unidad'), 'cubetas');
+    await fireEvent.press(screen.getByRole('button', { name: 'Usar esta unidad' }));
+    await guardar();
+
+    await waitFor(() => expect(props.alGuardar).toHaveBeenCalled());
+    expect(props.alGuardar).toHaveBeenCalledWith(expect.objectContaining({ unidad: 'cubetas' }));
+  });
+
+  it('«Más detalles» llega plegado y se abre solo al editar una labor que ya trae luz o costo', async () => {
+    await montar();
+    expect(screen.queryByRole('radio', { name: 'Soleado' })).toBeNull();
+    expect(
+      screen.getByRole('button', { name: /^Más detalles/ }).props.accessibilityState,
+    ).toMatchObject({ expanded: false });
+  });
+
+  it('al editar una labor con luz, los detalles ya están abiertos', async () => {
+    await montar({
+      valoresIniciales: valoresDesdeLabor(laborFila({ luz: 'soleado', costo: 1000 })),
+      textoBoton: 'Guardar cambios',
+    });
+
+    expect(screen.getByRole('radio', { name: 'Soleado' }).props.accessibilityState).toMatchObject({
+      checked: true,
+    });
+  });
+
+  it('muestra en qué lote se trabaja', async () => {
+    await montar({ lote: { nombre: 'La Esperanza', cultivo: 'Café' } });
+
+    expect(screen.getByText('La Esperanza')).toBeTruthy();
+    expect(screen.getByText('Café')).toBeTruthy();
   });
 });

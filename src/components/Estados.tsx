@@ -31,11 +31,17 @@ export interface VacioProps {
   readonly accion?: { readonly titulo: string; readonly alPulsar: () => void };
 }
 
-/** Vacío: dice qué falta y qué hacer, con la acción a mano. */
+/**
+ * Vacío: dice qué falta y qué hacer, con la acción a mano. El círculo tonal con un punto dorado es la
+ * ilustración de toda la app (sin librerías de dibujo, D104).
+ */
 export function Vacio({ titulo, mensaje, icono = 'leaf-outline', accion }: VacioProps) {
   return (
     <View className="items-center gap-3 p-6">
-      <Icono nombre={icono} tamano={48} tono="primary" />
+      <View className="h-24 w-24 items-center justify-center rounded-full bg-primary-soft">
+        <Icono nombre={icono} tamano={48} tono="primary" />
+        <View className="absolute right-2 top-2 h-3.5 w-3.5 rounded-full bg-accent" />
+      </View>
       <Texto variante="subtitulo" className="text-center">
         {titulo}
       </Texto>
@@ -59,7 +65,9 @@ export function ErrorConReintento({
     <View className="items-center gap-3 p-6">
       {/* Solo el texto es la alerta: el botón debe seguir siendo enfocable por separado. */}
       <View accessible accessibilityRole="alert" className="items-center gap-3">
-        <Icono nombre="alert-circle" tamano={48} tono="danger" />
+        <View className="h-16 w-16 items-center justify-center rounded-full bg-danger-soft">
+          <Icono nombre="alert-circle" tamano={32} tono="danger" />
+        </View>
         <Texto variante="subtitulo" className="text-center">
           No se pudo cargar
         </Texto>
@@ -67,7 +75,7 @@ export function ErrorConReintento({
           {mensaje}
         </Texto>
       </View>
-      <Boton titulo="Reintentar" icono="refresh" onPress={reintentar} />
+      <Boton titulo="Reintentar" icono="refresh" variante="tonal" onPress={reintentar} />
     </View>
   );
 }

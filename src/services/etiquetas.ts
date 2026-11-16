@@ -30,6 +30,14 @@ export function textoVencimiento(diasRestantes: number): string {
   return `Venció hace ${-diasRestantes} días`;
 }
 
+export type EstadoDeVencimiento = 'vencida' | 'hoy' | 'proxima';
+
+/** Cómo se presenta una labor sugerida: vencida (rojo suave), de hoy (dorado) o próxima (neutra), D104. */
+export function estadoDeVencimiento(diasRestantes: number): EstadoDeVencimiento {
+  if (diasRestantes < 0) return 'vencida';
+  return diasRestantes === 0 ? 'hoy' : 'proxima';
+}
+
 /** Unidad sugerida al elegir el tipo (las cosechas siempre van en kg, D42). */
 export const UNIDAD_SUGERIDA: Readonly<Record<TipoLabor, string>> = {
   riego: 'L',

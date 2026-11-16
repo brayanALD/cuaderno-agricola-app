@@ -1,28 +1,28 @@
 import { Controller, useWatch, type Control, type UseFormSetValue } from 'react-hook-form';
-import { TIPOS_LABOR, type Luz, type TipoLabor } from '@/db/modelo';
+import { View } from 'react-native';
+import { LUCES, type Luz } from '@/db/modelo';
 import { enCarencia, type Carencia } from '@/services/carencia';
 import type { UltimasLabores } from '@/services/laborService';
-import { ETIQUETA_LUZ, ETIQUETA_TIPO, UNIDAD_SUGERIDA } from '@/services/etiquetas';
+import { ETIQUETA_LUZ, UNIDAD_SUGERIDA } from '@/services/etiquetas';
 import { formatearFecha } from '@/services/fechas';
 import { conProducto, type ValoresLabor } from '@/services/formularios';
 import type { DatosLabor } from '@/services/validacion';
 import { AvisoDeCarencia } from '../AvisoDeCarencia';
-import { CampoFecha } from '../CampoFecha';
 import { ControlCantidad } from '../ControlCantidad';
+import { FechaRapida } from '../FechaRapida';
+import { SeccionPlegable } from '../SeccionPlegable';
 import { Selector, type OpcionSelector } from '../Selector';
+import { SelectorDeTipo } from '../SelectorDeTipo';
+import { SelectorDeUnidad } from '../SelectorDeUnidad';
 import { CampoControlado } from './CampoControlado';
 import { MedidorLuz } from './MedidorLuz';
 import { RepetirUltima } from './RepetirUltima';
 import { SeccionFoto } from './SeccionFoto';
 
-const OPCIONES_TIPO: readonly OpcionSelector<TipoLabor>[] = TIPOS_LABOR.map((tipo) => ({
-  valor: tipo,
-  etiqueta: ETIQUETA_TIPO[tipo],
+const OPCIONES_LUZ: readonly OpcionSelector<Luz>[] = LUCES.map((luz) => ({
+  valor: luz,
+  etiqueta: ETIQUETA_LUZ[luz],
 }));
-
-const OPCIONES_LUZ: readonly OpcionSelector<Luz>[] = (['soleado', 'nublado'] as const).map(
-  (luz) => ({ valor: luz, etiqueta: ETIQUETA_LUZ[luz] }),
-);
 
 type ControlLabor = Control<ValoresLabor, unknown, DatosLabor>;
 
@@ -32,21 +32,20 @@ interface Props {
   readonly hoy: string;
   readonly carencia?: Carencia | null;
   readonly ultimas?: UltimasLabores;
+  /** Abre «Más detalles» desde el principio (al editar una labor que ya trae luz o costo). */
+  readonly detallesAbiertos?: boolean;
 }
 
 /** Al elegir un tipo se sugiere su unidad (las cosechas siempre van en kg). */
-function SelectorDeTipo({ control, setValue }: Pick<Props, 'control' | 'setValue'>) {
+function CampoTipo({ control, setValue }: Pick<Props, 'control' | 'setValue'>) {
   return (
     <Controller
       control={control}
       name="tipo"
       render={({ field, fieldState }) => (
-        <Selector
-          etiqueta="Tipo de labor"
-          opciones={OPCIONES_TIPO}
+        <SelectorDeTipo
           valor={field.value}
           onChange={(elegido) => {
-            if (elegido === null) return;
             field.onChange(elegido);
             setValue('unidad', UNIDAD_SUGERIDA[elegido]);
           }}
@@ -57,14 +56,44 @@ function SelectorDeTipo({ control, setValue }: Pick<Props, 'control' | 'setValue
   );
 }
 
-/** Tipo, fecha, cantidad y unidad. En cosecha la unidad es siempre kg y el paso es de 0,5. */
-function CamposPrincipales({ control, setValue, hoy, carencia = null, ultimas }: Props) {
+/** Cantidad con su unidad al lado. En cosecha la unidad es siempre kg (fija) y el paso es de 0,5. */
+function CampoCantidad({ control, setValue }: Pick<Props, 'control' | 'setValue'>) {
   const tipo = useWatch({ control, name: 'tipo' });
   const unidad = useWatch({ control, name: 'unidad' });
+  const cosecha = tipo === 'cosecha';
+  return (
+    <Controller
+      control={control}
+      name="cantidad"
+      render={({ field, fieldState }) => (
+        <ControlCantidad
+          etiqueta="Cantidad"
+          valor={field.value}
+          onChange={field.onChange}
+          paso={cosecha ? 0.5 : 1}
+          unidad={cosecha ? 'kg' : undefined}
+          extra={
+            cosecha ? null : (
+              <SelectorDeUnidad
+                valor={unidad}
+                onChange={(nueva) => setValue('unidad', nueva, { shouldDirty: true })}
+              />
+            )
+          }
+          error={fieldState.error?.message}
+        />
+      )}
+    />
+  );
+}
+
+/** Tipo, repetir la última, fecha y cantidad; y el aviso (no bloquea) si la cosecha cae en carencia. */
+function CamposPrincipales({ control, setValue, hoy, carencia = null, ultimas }: Props) {
+  const tipo = useWatch({ control, name: 'tipo' });
   const fecha = useWatch({ control, name: 'fecha' });
   return (
     <>
-      <SelectorDeTipo control={control} setValue={setValue} />
+      <CampoTipo control={control} setValue={setValue} />
       {ultimas === undefined ? null : (
         <RepetirUltima control={control} setValue={setValue} ultimas={ultimas} />
       )}
@@ -72,7 +101,7 @@ function CamposPrincipales({ control, setValue, hoy, carencia = null, ultimas }:
         control={control}
         name="fecha"
         render={({ field, fieldState }) => (
-          <CampoFecha
+          <FechaRapida
             etiqueta="Fecha de la labor"
             valor={field.value}
             onChange={field.onChange}
@@ -82,33 +111,17 @@ function CamposPrincipales({ control, setValue, hoy, carencia = null, ultimas }:
           />
         )}
       />
-      <Controller
-        control={control}
-        name="cantidad"
-        render={({ field, fieldState }) => (
-          <ControlCantidad
-            etiqueta="Cantidad"
-            valor={field.value}
-            onChange={field.onChange}
-            paso={tipo === 'cosecha' ? 0.5 : 1}
-            unidad={tipo === 'cosecha' ? 'kg' : unidad}
-            error={fieldState.error?.message}
-          />
-        )}
-      />
+      <CampoCantidad control={control} setValue={setValue} />
       {tipo === 'cosecha' && carencia !== null && enCarencia(fecha, carencia) ? (
         <AvisoDeCarencia
           texto={`Esta fecha está dentro del periodo de carencia${carencia.producto === null ? '' : ` de ${carencia.producto}`}: la cosecha es segura desde el ${formatearFecha(carencia.hasta)}.`}
         />
       ) : null}
-      {tipo === 'cosecha' ? null : (
-        <CampoControlado control={control} name="unidad" etiqueta="Unidad" />
-      )}
     </>
   );
 }
 
-/** Producto aplicado (fumigación y abono), días de carencia (fumigación) y costo de la labor (D95). */
+/** Producto aplicado (fumigación y abono) y días de carencia (fumigación): solo lo que tiene sentido para el tipo (D95). */
 function CamposDeInsumo({ control }: { readonly control: ControlLabor }) {
   const tipo = useWatch({ control, name: 'tipo' });
   return (
@@ -130,27 +143,19 @@ function CamposDeInsumo({ control }: { readonly control: ControlLabor }) {
           ayuda="Días que hay que esperar después de aplicar antes de cosechar."
         />
       ) : null}
-      <CampoControlado
-        control={control}
-        name="costo"
-        etiqueta="Costo (opcional)"
-        teclado="numeric"
-        ayuda="Lo que costó esta labor; suma al costo del lote y al costo por kg."
-      />
     </>
   );
 }
 
-/** Nota, condiciones de luz y foto: todo opcional. */
-function CamposOpcionales({
-  control,
-  setValue,
-}: {
-  readonly control: ControlLabor;
-  readonly setValue: UseFormSetValue<ValoresLabor>;
-}) {
+/** Foto y nota juntas: lo que se registra a diario en el campo. */
+function FotoYNota({ control }: { readonly control: ControlLabor }) {
   return (
-    <>
+    <View className="gap-3">
+      <Controller
+        control={control}
+        name="foto_uri"
+        render={({ field }) => <SeccionFoto uri={field.value} alCambiar={field.onChange} />}
+      />
       <CampoControlado
         control={control}
         name="nota"
@@ -158,6 +163,18 @@ function CamposOpcionales({
         multilinea
         maxLength={500}
       />
+    </View>
+  );
+}
+
+/** Condiciones de luz y costo, plegados: opcionales y poco frecuentes (D104). */
+function MasDetalles({
+  control,
+  setValue,
+  abierta,
+}: Pick<Props, 'control' | 'setValue'> & { readonly abierta: boolean }) {
+  return (
+    <SeccionPlegable titulo="Más detalles" resumen="Luz y costo" abiertaAlInicio={abierta}>
       <Controller
         control={control}
         name="luz"
@@ -173,17 +190,26 @@ function CamposOpcionales({
         )}
       />
       <MedidorLuz alMedir={(luz) => setValue('luz', luz, { shouldDirty: true })} />
-      <Controller
+      <CampoControlado
         control={control}
-        name="foto_uri"
-        render={({ field }) => <SeccionFoto uri={field.value} alCambiar={field.onChange} />}
+        name="costo"
+        etiqueta="Costo (opcional)"
+        teclado="numeric"
+        ayuda="Lo que costó esta labor; suma al costo del lote y al costo por kg."
       />
-    </>
+    </SeccionPlegable>
   );
 }
 
-/** Todos los campos de una labor. */
-export function CamposLabor({ control, setValue, hoy, carencia, ultimas }: Props) {
+/** Todos los campos de una labor, en el orden en que se llenan. */
+export function CamposLabor({
+  control,
+  setValue,
+  hoy,
+  carencia,
+  ultimas,
+  detallesAbiertos = false,
+}: Props) {
   return (
     <>
       <CamposPrincipales
@@ -194,7 +220,8 @@ export function CamposLabor({ control, setValue, hoy, carencia, ultimas }: Props
         ultimas={ultimas}
       />
       <CamposDeInsumo control={control} />
-      <CamposOpcionales control={control} setValue={setValue} />
+      <FotoYNota control={control} />
+      <MasDetalles control={control} setValue={setValue} abierta={detallesAbiertos} />
     </>
   );
 }

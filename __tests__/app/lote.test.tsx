@@ -142,18 +142,50 @@ describe('lote/[id] (ficha)', () => {
     await montar(() => <DetalleDeLote />, sembrar);
 
     expect(await screen.findByText('90 días')).toBeTruthy();
-    expect(await screen.findByText('Total: 23,85 kg')).toBeTruthy();
+    expect(await screen.findByText('23,85 kg')).toBeTruthy();
+    expect(screen.getByLabelText('octubre de 2026: 12,5 kg')).toBeTruthy();
+    expect(screen.getByLabelText('noviembre de 2026: 11,35 kg')).toBeTruthy();
+    expect(screen.getByText('Lote 1 de 2')).toBeTruthy();
+  });
+
+  it('la lista de datos repite el gráfico como texto, para quien no ve las barras', async () => {
+    mockParams = { id: 'id-1' };
+    await montar(() => <DetalleDeLote />, sembrar);
+    await screen.findByText('23,85 kg');
+    expect(screen.queryByText('octubre de 2026: 12,5 kg')).toBeNull();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Ver los datos en lista' }));
+
     expect(screen.getByText('octubre de 2026: 12,5 kg')).toBeTruthy();
     expect(screen.getByText('noviembre de 2026: 11,35 kg')).toBeTruthy();
-    expect(screen.getByText('Lote 1 de 2')).toBeTruthy();
   });
 
   it('muestra la próxima labor sugerida y la bitácora', async () => {
     mockParams = { id: 'id-1' };
     await montar(() => <DetalleDeLote />, sembrar);
 
-    expect(await screen.findByText(/Riego · .*\(/)).toBeTruthy();
-    expect(await screen.findAllByText('Cosecha')).toHaveLength(3);
+    expect(await screen.findByText('Próxima labor sugerida')).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Registrar riego' })).toBeTruthy();
+    expect(
+      await screen.findAllByRole('button', { name: /^Labor de cosecha .*\. Editar$/ }),
+    ).toHaveLength(3);
+  });
+
+  it('filtra la bitácora por tipo con chips y explica cuando no hay de ese tipo', async () => {
+    mockParams = { id: 'id-1' };
+    await montar(() => <DetalleDeLote />, sembrar);
+    await screen.findByText('23,85 kg');
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Riego' }));
+
+    expect(screen.queryAllByRole('button', { name: /^Labor de cosecha/ })).toHaveLength(0);
+    expect(screen.getByText('Este lote no tiene labores de riego.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Riego' }).props.accessibilityState).toMatchObject({
+      selected: true,
+    });
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Todas' }));
+    expect(await screen.findAllByRole('button', { name: /^Labor de cosecha/ })).toHaveLength(3);
   });
 
   it('un lote sin labores explica cómo empezar', async () => {
@@ -164,14 +196,22 @@ describe('lote/[id] (ficha)', () => {
     expect(screen.getByText('Aún no hay cosechas')).toBeTruthy();
   });
 
-  it('los botones llevan a editar el lote y a registrar una labor', async () => {
+  it('el menú ⋮ lleva a editar el lote y a cerrar el ciclo; el botón flotante, a registrar una labor', async () => {
     mockParams = { id: 'id-1' };
     await montar(() => <DetalleDeLote />, sembrar);
     await screen.findByText('90 días');
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Editar' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Más acciones del lote' }));
+    await fireEvent.press(screen.getByRole('menuitem', { name: 'Editar lote' }));
     expect(mockRouter.push).toHaveBeenLastCalledWith({
       pathname: '/lote/editar/[id]',
+      params: { id: 'id-1' },
+    });
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Más acciones del lote' }));
+    await fireEvent.press(screen.getByRole('menuitem', { name: 'Cerrar ciclo' }));
+    expect(mockRouter.push).toHaveBeenLastCalledWith({
+      pathname: '/lote/ciclo/[id]',
       params: { id: 'id-1' },
     });
 
@@ -179,6 +219,18 @@ describe('lote/[id] (ficha)', () => {
     expect(mockRouter.push).toHaveBeenLastCalledWith({
       pathname: '/labor/nueva',
       params: { lote: 'id-1' },
+    });
+  });
+
+  it('«Registrar riego» abre el formulario con el tipo que toca ya elegido (menos pasos)', async () => {
+    mockParams = { id: 'id-1' };
+    await montar(() => <DetalleDeLote />, sembrar);
+
+    await fireEvent.press(await screen.findByRole('button', { name: 'Registrar riego' }));
+
+    expect(mockRouter.push).toHaveBeenLastCalledWith({
+      pathname: '/labor/nueva',
+      params: { lote: 'id-1', tipo: 'riego' },
     });
   });
 
@@ -205,7 +257,8 @@ describe('lote/[id] (ficha)', () => {
     const ctx = await montar(() => <DetalleDeLote />, sembrar);
     await screen.findByText('90 días');
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Borrar lote' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Más acciones del lote' }));
+    await fireEvent.press(screen.getByRole('menuitem', { name: 'Borrar lote' }));
     const [titulo, , botones] = alerta.mock.calls[0] ?? [];
     expect(titulo).toBe('¿Borrar el lote?');
     expect(mockRouter.back).not.toHaveBeenCalled();

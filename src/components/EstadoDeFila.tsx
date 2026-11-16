@@ -3,12 +3,12 @@ import { Icono } from './Icono';
 import { Texto } from './Texto';
 
 export const TEXTO_PENDIENTE = 'Pendiente de enviar';
-export const TEXTO_SINCRONIZADO = 'Sincronizado';
 
 /**
- * Estado de sincronización de una fila (D99), con icono Y texto (nunca solo color). Una fila con aviso no lo
- * muestra: ya tiene su `AvisoDeSync` con el motivo. El lector de pantalla lo recibe dentro de la descripción de
- * la fila (solo cuando está pendiente), no como un elemento más.
+ * Estado de sincronización de una fila, con icono Y texto (nunca solo color). Solo se dice lo que requiere
+ * atención: «Pendiente de enviar». Lo normal (sincronizado) no se anuncia en cada fila, solo en Cuenta (D105).
+ * Una fila con aviso tampoco lo muestra: ya tiene su `AvisoDeSync` con el motivo. El lector de pantalla lo recibe
+ * dentro de la descripción de la fila, no como un elemento más.
  */
 export function EstadoDeFila({
   pending,
@@ -17,20 +17,15 @@ export function EstadoDeFila({
   readonly pending: 0 | 1;
   readonly syncError: string | null;
 }) {
-  if (syncError !== null) return null;
-  const pendiente = pending === 1;
+  if (syncError !== null || pending === 0) return null;
   return (
     <View
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       className="flex-row items-center gap-1 self-start"
     >
-      <Icono
-        nombre={pendiente ? 'cloud-upload-outline' : 'cloud-done-outline'}
-        tamano={16}
-        tono="textMuted"
-      />
-      <Texto variante="ayuda">{pendiente ? TEXTO_PENDIENTE : TEXTO_SINCRONIZADO}</Texto>
+      <Icono nombre="cloud-upload-outline" tamano={16} tono="textMuted" />
+      <Texto variante="ayuda">{TEXTO_PENDIENTE}</Texto>
     </View>
   );
 }

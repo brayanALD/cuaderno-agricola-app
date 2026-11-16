@@ -93,12 +93,15 @@ export interface ValoresLabor {
   costo: string;
 }
 
-/** Una labor nueva empieza en «riego», de hoy: nunca queda un tipo sin elegir. */
-export const valoresLaborVacios = (hoy: string): ValoresLabor => ({
-  tipo: 'riego',
+/**
+ * Una labor nueva empieza en «riego», de hoy, salvo que se pida otro tipo (p. ej. el que toca en el lote):
+ * nunca queda un tipo sin elegir y la unidad es la sugerida para él.
+ */
+export const valoresLaborVacios = (hoy: string, tipo: TipoLabor = 'riego'): ValoresLabor => ({
+  tipo,
   fecha: hoy,
   cantidad: 0,
-  unidad: UNIDAD_SUGERIDA.riego,
+  unidad: UNIDAD_SUGERIDA[tipo],
   nota: '',
   luz: null,
   foto_uri: null,

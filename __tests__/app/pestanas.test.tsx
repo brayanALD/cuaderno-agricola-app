@@ -37,7 +37,7 @@ describe('pestaña Lotes', () => {
     await montar(() => <PantallaLotes />);
 
     expect(await screen.findByText('Aún no hay lotes')).toBeTruthy();
-    await fireEvent.press(screen.getAllByRole('button', { name: 'Nuevo lote' })[0]!);
+    await fireEvent.press(screen.getByRole('button', { name: 'Crear mi primer lote' }));
 
     expect(mockRouter.push).toHaveBeenCalledWith('/lote/nuevo');
   });
@@ -108,9 +108,9 @@ describe('pestaña Labores', () => {
   it('muestra la próxima labor sugerida de cada lote y las labores recientes con su lote', async () => {
     await montar(() => <PantallaLabores />, sembrar);
 
-    expect(await screen.findByText('Próximas labores')).toBeTruthy();
     expect(await screen.findByText('Lote: El Mirador')).toBeTruthy();
     expect(screen.getByText('Limpiar la zanja')).toBeTruthy();
+    expect(screen.getByText('Recientes')).toBeTruthy();
     await fireEvent.press(screen.getAllByRole('button', { name: /sugerido en El Mirador/ })[0]!);
 
     expect(mockRouter.push).toHaveBeenCalledWith({
@@ -119,11 +119,44 @@ describe('pestaña Labores', () => {
     });
   });
 
+  it('cada labor que toca se agrupa y «Registrar» abre el formulario con lote y tipo elegidos', async () => {
+    await montar(() => <PantallaLabores />, sembrar);
+
+    await fireEvent.press(
+      await screen.findByRole('button', { name: /^Registrar .* en El Mirador$/ }),
+    );
+
+    expect(mockRouter.push).toHaveBeenLastCalledWith({
+      pathname: '/labor/nueva',
+      params: {
+        lote: 'id-1',
+        tipo: expect.stringMatching(/^(riego|abono|fumigacion|poda|cosecha)$/),
+      },
+    });
+    expect(screen.getByText(/^(Vencidas|Para hoy|Próximas) · 1$/)).toBeTruthy();
+  });
+
+  it('el filtro por tipo deja solo las que toca de ese tipo y las recientes de ese tipo', async () => {
+    await montar(() => <PantallaLabores />, sembrar);
+    await screen.findByText('Limpiar la zanja');
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Poda' }));
+
+    expect(screen.queryByText('Limpiar la zanja')).toBeNull();
+    expect(screen.queryByRole('button', { name: /sugerido en El Mirador/ })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Poda' }).props.accessibilityState).toMatchObject({
+      selected: true,
+    });
+  });
+
   it('duplicar con el botón agrega la labor con la fecha de hoy y lo avisa', async () => {
     await montar(() => <PantallaLabores />, sembrar);
     await screen.findByText('Limpiar la zanja');
 
-    await fireEvent.press(screen.getByRole('button', { name: /^Duplicar la labor de riego/ }));
+    await fireEvent.press(
+      screen.getByRole('button', { name: /^Más acciones de la labor de riego/ }),
+    );
+    await fireEvent.press(screen.getByRole('menuitem', { name: 'Duplicar con la fecha de hoy' }));
 
     expect(await screen.findByText('Labor duplicada con la fecha de hoy.')).toBeTruthy();
     await waitFor(() =>
@@ -137,7 +170,7 @@ describe('pestaña Labores', () => {
 
     await fireEvent.changeText(screen.getByLabelText('Buscar labor (tipo o nota)'), 'zanja');
     expect(await screen.findByText('Resultados')).toBeTruthy();
-    expect(screen.queryByText('Próximas labores')).toBeNull();
+    expect(screen.queryByRole('button', { name: /sugerido en El Mirador/ })).toBeNull();
 
     await fireEvent.changeText(screen.getByLabelText('Buscar labor (tipo o nota)'), 'xyz');
     expect(await screen.findByText('Sin resultados')).toBeTruthy();

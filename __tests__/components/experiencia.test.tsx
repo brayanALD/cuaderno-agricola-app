@@ -5,7 +5,7 @@ import { AvisoDePendientes } from '@/components/AvisoDePendientes';
 import { descripcionDeEstado, EstadoDeFila } from '@/components/EstadoDeFila';
 import { FilaLabor } from '@/components/FilaLabor';
 import { FilaLote } from '@/components/FilaLote';
-import { anchoDeBarra, GraficoProduccion } from '@/components/GraficoProduccion';
+import { alturaDeBarra, GraficoProduccion } from '@/components/GraficoProduccion';
 import { FormularioLabor } from '@/components/formularios/FormularioLabor';
 import { PanelResumen } from '@/components/PanelResumen';
 import { marcarLoteConError } from '@/repositories/loteRepository';
@@ -35,10 +35,10 @@ describe('estado por fila (D99)', () => {
     expect(screen.getByText('Pendiente de enviar', { includeHiddenElements: true })).toBeTruthy();
   });
 
-  it('sincronizado: «Sincronizado»', async () => {
+  it('sincronizado: no dice nada (lo normal no se anuncia en cada fila, D105)', async () => {
     await render(<EstadoDeFila pending={0} syncError={null} />);
 
-    expect(screen.getByText('Sincronizado', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.toJSON()).toBeNull();
   });
 
   it('con aviso no repite nada: ya está el motivo en el aviso', async () => {
@@ -64,10 +64,10 @@ describe('estado por fila (D99)', () => {
     ).toBeTruthy();
   });
 
-  it('una fila de lote sincronizada muestra «Sincronizado» y no cambia su descripción', async () => {
+  it('una fila de lote sincronizada no muestra estado y no cambia su descripción', async () => {
     await render(<FilaLote lote={lote({ pending: 0 })} alAbrir={jest.fn()} />);
 
-    expect(screen.getByText('Sincronizado', { includeHiddenElements: true })).toBeTruthy();
+    expect(screen.queryByText('Sincronizado', { includeHiddenElements: true })).toBeNull();
     expect(
       screen.getByRole('button', { name: 'Lote El Mirador, Café, 90 días. Abrir' }),
     ).toBeTruthy();
@@ -94,7 +94,7 @@ describe('estado por fila (D99)', () => {
     expect(
       screen.getAllByText('Pendiente de enviar', { includeHiddenElements: true }),
     ).toHaveLength(1);
-    expect(screen.getAllByText('Sincronizado', { includeHiddenElements: true })).toHaveLength(1);
+    expect(screen.queryByText('Sincronizado', { includeHiddenElements: true })).toBeNull();
   });
 });
 
@@ -125,7 +125,7 @@ describe('aviso global de cambios sin enviar (D99)', () => {
       await crearLote(c, datosLote());
     });
 
-    expect(await screen.findByText(/^1 cambio sin enviar\./)).toBeTruthy();
+    expect(await screen.findByText('1 cambio sin enviar')).toBeTruthy();
 
     await crearLabor(ctx, 'id-1', datosLabor());
     await ctx.db.execAsync('UPDATE labor SET pending = 1');
@@ -139,7 +139,7 @@ describe('aviso global de cambios sin enviar (D99)', () => {
       await c.db.execAsync("UPDATE lote SET updated_at = '" + AHORA + "'");
     });
 
-    expect(await screen.findByText(/^2 cambios sin enviar\./)).toBeTruthy();
+    expect(await screen.findByText('2 cambios sin enviar')).toBeTruthy();
     expect(screen.getByText(/1 tiene un aviso: ábrelo para corregirlo\./)).toBeTruthy();
   });
 });
@@ -148,7 +148,7 @@ describe('panel resumen (D100)', () => {
   it('sin lotes no pinta nada', async () => {
     await montar(<PanelResumen />);
 
-    await waitFor(() => expect(screen.queryByText('Resumen')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('Hoy o vencidas')).toBeNull());
   });
 
   it('muestra lotes, labores que tocan hoy y lo cosechado este mes', async () => {
@@ -161,37 +161,41 @@ describe('panel resumen (D100)', () => {
       );
     });
 
-    expect(await screen.findByText('Resumen')).toBeTruthy();
+    expect(await screen.findByText('Hoy o vencidas')).toBeTruthy();
     expect(screen.getByLabelText('Lote: 1')).toBeTruthy();
     expect(screen.getByLabelText('Labor toca hoy o venció: 1')).toBeTruthy();
     expect(screen.getByLabelText('Cosechado en noviembre de 2026: 12,5 kg')).toBeTruthy();
   });
 });
 
-describe('gráfico de producción (D101)', () => {
-  it('el mes mayor ocupa todo el ancho y los demás son proporcionales', () => {
-    expect(anchoDeBarra(50, 50)).toBe(100);
-    expect(anchoDeBarra(25, 50)).toBe(50);
+describe('gráfico de producción (D101, D104)', () => {
+  it('el mes mayor ocupa todo el alto y los demás son proporcionales', () => {
+    expect(alturaDeBarra(50, 50)).toBe(120);
+    expect(alturaDeBarra(25, 50)).toBe(60);
   });
 
   it('un mes pequeño nunca queda invisible y sin cosecha no hay barra', () => {
-    expect(anchoDeBarra(0.1, 1000)).toBe(4);
-    expect(anchoDeBarra(0, 50)).toBe(0);
-    expect(anchoDeBarra(5, 0)).toBe(0);
+    expect(alturaDeBarra(0.1, 1000)).toBe(6);
+    expect(alturaDeBarra(0, 50)).toBe(0);
+    expect(alturaDeBarra(5, 0)).toBe(0);
   });
 
-  it('cada mes lleva su texto con los kg y su barra', async () => {
+  it('cada mes es una columna con su valor escrito, el mes abreviado y su descripción completa', async () => {
     await render(
       <GraficoProduccion
         meses={[
           { mes: '2026-10', kg: 12.5 },
           { mes: '2026-11', kg: 25 },
         ]}
+        mesActual="2026-11"
       />,
     );
 
-    expect(screen.getByText('octubre de 2026: 12,5 kg')).toBeTruthy();
-    expect(screen.getByText('noviembre de 2026: 25 kg')).toBeTruthy();
+    expect(screen.getByLabelText('octubre de 2026: 12,5 kg')).toBeTruthy();
+    expect(screen.getByLabelText('noviembre de 2026: 25 kg')).toBeTruthy();
+    expect(screen.getByText('12,5 kg')).toBeTruthy();
+    expect(screen.getByText('oct')).toBeTruthy();
+    expect(screen.getByText('nov · en curso')).toBeTruthy();
     expect(screen.getByTestId('barra-2026-10', { includeHiddenElements: true })).toBeTruthy();
     expect(screen.getByTestId('barra-2026-11', { includeHiddenElements: true })).toBeTruthy();
   });

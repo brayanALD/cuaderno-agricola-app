@@ -11,7 +11,7 @@ export default function NuevoLote() {
   const { crearLote } = useAcciones();
   const hoy = useHoy();
   return (
-    <Pantalla>
+    <Pantalla desplazable={false} relleno={false}>
       <FormularioLote
         valoresIniciales={valoresLoteVacios(hoy)}
         hoy={hoy}

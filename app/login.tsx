@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
+import { View } from 'react-native';
 import { Boton } from '@/components/Boton';
 import { FormularioAcceso } from '@/components/formularios/FormularioAcceso';
+import { MarcaDeAcceso } from '@/components/MarcaDeAcceso';
 import { Pantalla } from '@/components/Pantalla';
 import { Texto } from '@/components/Texto';
 import { useSesion } from '@/context/SesionContext';
@@ -14,6 +16,7 @@ export default function Login() {
   const { iniciarSesion } = useSesion();
   return (
     <Pantalla>
+      <MarcaDeAcceso />
       <Texto variante="titulo">Inicia sesión</Texto>
       <Texto variante="ayuda">
         Necesitas conexión a internet para iniciar sesión. Después podrás trabajar sin conexión.
@@ -30,9 +33,10 @@ export default function Login() {
         variante="texto"
         onPress={() => router.push('/recuperar')}
       />
+      <View className="my-1 h-px bg-divider" />
       <Boton
         titulo="¿No tienes cuenta? Crea una"
-        variante="texto"
+        variante="secundario"
         onPress={() => router.push('/registro')}
       />
     </Pantalla>

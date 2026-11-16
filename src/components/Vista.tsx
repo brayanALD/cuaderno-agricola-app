@@ -5,15 +5,17 @@ import { Cargando, ErrorConReintento, Vacio, type VacioProps } from './Estados';
 interface VistaProps<T> {
   readonly carga: Carga<T>;
   readonly vacio: VacioProps;
+  /** Forma de lo que viene mientras carga (skeleton). Sin él, el indicador genérico de siempre. */
+  readonly esqueleto?: ReactNode;
   readonly children: (datos: T) => ReactNode;
 }
 
 /** Resuelve los 4 estados de una lectura (carga, vacío, error con reintento, listo) en un solo lugar. */
-export function Vista<T>({ carga, vacio, children }: VistaProps<T>) {
+export function Vista<T>({ carga, vacio, esqueleto, children }: VistaProps<T>) {
   const { vista, reintentar } = carga;
   switch (vista.estado) {
     case 'cargando':
-      return <Cargando />;
+      return <>{esqueleto ?? <Cargando />}</>;
     case 'vacio':
       return <Vacio {...vacio} />;
     case 'error':

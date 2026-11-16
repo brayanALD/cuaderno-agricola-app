@@ -13,7 +13,7 @@ export function PanelRecordatorios() {
   const colores = useColores();
   return (
     <Tarjeta>
-      <Texto variante="titulo">Recordatorio de riego</Texto>
+      <Texto variante="subtitulo">Recordatorio de riego</Texto>
       <Texto variante="ayuda">
         Te avisa a la hora elegida cuando toca regar cada lote: 3 días después del último riego de
         la bitácora. Los avisos se calculan en este teléfono, también sin conexión.

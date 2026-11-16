@@ -39,7 +39,7 @@ describe('FilaLabor (gesto: mantener presionado)', () => {
     expect(a.alDuplicar).not.toHaveBeenCalled();
   });
 
-  it('el botón «Duplicar» es la alternativa, con etiqueta que dice qué labor y con qué fecha', async () => {
+  it('el menú ⋮ nombra la labor y su opción «Duplicar» es la alternativa visible al gesto', async () => {
     const a = acciones();
     await render(<FilaLabor labor={laborFila({ id: 'x1', fecha: '2026-11-10' })} {...a} />, {
       wrapper: Raiz,
@@ -47,21 +47,42 @@ describe('FilaLabor (gesto: mantener presionado)', () => {
 
     await fireEvent.press(
       screen.getByRole('button', {
-        name: 'Duplicar la labor de riego del 10 de noviembre de 2026 con la fecha de hoy',
+        name: 'Más acciones de la labor de riego del 10 de noviembre de 2026',
       }),
     );
+    await fireEvent.press(screen.getByRole('menuitem', { name: 'Duplicar con la fecha de hoy' }));
 
     expect(a.alDuplicar).toHaveBeenCalledWith('x1');
   });
 
-  it('tocar la fila edita y el botón de basura borra', async () => {
+  it('tocar la fila edita y borrar está en el menú, aparte de las demás acciones', async () => {
     const a = acciones();
     await render(<FilaLabor labor={laborFila({ id: 'x1' })} {...a} />, { wrapper: Raiz });
 
     await fireEvent.press(screen.getByRole('button', { name: /Editar$/ }));
-    await fireEvent.press(screen.getByRole('button', { name: /^Borrar la labor/ }));
+    expect(screen.queryByRole('menuitem', { name: 'Borrar la labor' })).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: /^Más acciones de la labor/ }));
+    await fireEvent.press(screen.getByRole('menuitem', { name: 'Borrar la labor' }));
 
     expect(a.alEditar).toHaveBeenCalledWith('x1');
+    expect(a.alBorrar).toHaveBeenCalledWith('x1');
+  });
+
+  it('el lector de pantalla tiene acciones propias para duplicar y borrar (sin gestos ni menús)', async () => {
+    const a = acciones();
+    await render(<FilaLabor labor={laborFila({ id: 'x1' })} {...a} />, { wrapper: Raiz });
+
+    const fila = screen.getByRole('button', { name: /Editar$/ });
+    expect(fila.props.accessibilityActions).toEqual([
+      { name: 'duplicar', label: 'Duplicar con la fecha de hoy' },
+      { name: 'borrar', label: 'Borrar la labor' },
+    ]);
+    await act(async () => {
+      fila.props.onAccessibilityAction({ nativeEvent: { actionName: 'duplicar' } });
+      fila.props.onAccessibilityAction({ nativeEvent: { actionName: 'borrar' } });
+    });
+
+    expect(a.alDuplicar).toHaveBeenCalledWith('x1');
     expect(a.alBorrar).toHaveBeenCalledWith('x1');
   });
 

@@ -1,11 +1,13 @@
 import { View } from 'react-native';
-import { Aviso } from './Aviso';
-import { Boton } from './Boton';
-import { DeslizarLotes } from './DeslizarLotes';
+import type { TipoLabor } from '@/db/modelo';
 import { useReporte } from '@/hooks/useReporte';
-import { FichaLote, ResumenLote } from './DetalleLote';
-import { MensajeError } from './MensajeError';
-import { Texto } from './Texto';
+import type { FormatoReporte } from '@/services/reporteService';
+import { Aviso } from './Aviso';
+import { Banner } from './Banner';
+import { DeslizarLotes } from './DeslizarLotes';
+import { FichaLote } from './FichaLote';
+import { MenuDeAcciones } from './MenuDeAcciones';
+import { ResumenLote } from './ResumenLote';
 
 export interface CabeceraDeLoteProps {
   readonly id: string;
@@ -17,38 +19,62 @@ export interface CabeceraDeLoteProps {
   readonly alEditar: () => void;
   readonly alBorrar: () => void;
   readonly alCerrarCiclo: () => void;
-  readonly alRegistrarLabor: () => void;
+  /** Sin tipo, el formulario empieza en riego; con tipo, en el que toca hacer. */
+  readonly alRegistrarLabor: (tipo?: TipoLabor) => void;
 }
 
-/** Exporta la bitácora del lote para auditorías o certificaciones (D95). */
-function ExportarReporte({ id }: { readonly id: string }) {
-  const { generando, error, exportar } = useReporte(id);
+interface MenuProps {
+  readonly alEditar: () => void;
+  readonly alCerrarCiclo: () => void;
+  readonly alBorrar: () => void;
+  readonly exportar: (formato: FormatoReporte) => Promise<void>;
+}
+
+/** Lo que no se hace a diario, agrupado en un ⋮; «Borrar» va al final, separado y en rojo (Fitts, D105). */
+function MenuDeLote({ alEditar, alCerrarCiclo, alBorrar, exportar }: MenuProps) {
   return (
-    <View className="gap-2">
-      <View className="flex-row flex-wrap gap-2">
-        <Boton
-          titulo="Exportar PDF"
-          icono="document-text-outline"
-          variante="secundario"
-          cargando={generando === 'pdf'}
-          deshabilitado={generando !== null}
-          onPress={() => void exportar('pdf')}
-        />
-        <Boton
-          titulo="Exportar CSV"
-          icono="grid-outline"
-          variante="secundario"
-          cargando={generando === 'csv'}
-          deshabilitado={generando !== null}
-          onPress={() => void exportar('csv')}
-        />
-      </View>
-      <MensajeError texto={error ?? undefined} />
-    </View>
+    <MenuDeAcciones
+      etiqueta="Más acciones del lote"
+      acciones={[
+        { titulo: 'Editar lote', icono: 'create-outline', alPulsar: alEditar },
+        { titulo: 'Cerrar ciclo', icono: 'refresh-outline', alPulsar: alCerrarCiclo },
+        {
+          titulo: 'Exportar PDF',
+          icono: 'document-text-outline',
+          alPulsar: () => void exportar('pdf'),
+        },
+        { titulo: 'Exportar CSV', icono: 'grid-outline', alPulsar: () => void exportar('csv') },
+        { titulo: 'Borrar lote', icono: 'trash-outline', alPulsar: alBorrar, peligro: true },
+      ]}
+    />
   );
 }
 
-/** Ficha deslizable, acciones del lote, resumen (próxima labor y producción) y encabezado de la bitácora. */
+/** Mientras se genera el reporte y, si falla, el motivo (D95). */
+function EstadoDelReporte({
+  generando,
+  error,
+}: {
+  readonly generando: FormatoReporte | null;
+  readonly error: string | null;
+}) {
+  return (
+    <>
+      {generando === null ? null : (
+        <Banner
+          icono="document-text-outline"
+          texto={`Generando ${generando === 'pdf' ? 'el PDF' : 'el CSV'}…`}
+        />
+      )}
+      {error === null ? null : <Banner tono="error" icono="alert-circle" texto={error} />}
+    </>
+  );
+}
+
+/**
+ * Ficha deslizable con el menú del lote, lo que toca hacer, producción y ciclos (D104). La acción frecuente
+ * («Registrar labor») es el botón flotante de la pantalla; aquí solo queda lo que informa.
+ */
 export function CabeceraDeLote({
   id,
   posicion,
@@ -61,6 +87,15 @@ export function CabeceraDeLote({
   alCerrarCiclo,
   alRegistrarLabor,
 }: CabeceraDeLoteProps) {
+  const { generando, error, exportar } = useReporte(id);
+  const menu = (
+    <MenuDeLote
+      alEditar={alEditar}
+      alCerrarCiclo={alCerrarCiclo}
+      alBorrar={alBorrar}
+      exportar={exportar}
+    />
+  );
   return (
     <View className="gap-4">
       <DeslizarLotes
@@ -70,26 +105,11 @@ export function CabeceraDeLote({
         posicion={posicion}
         alCambiar={alCambiarDeLote}
       >
-        <FichaLote id={id} />
+        <FichaLote id={id} menu={menu} />
       </DeslizarLotes>
-      <View className="flex-row flex-wrap gap-2">
-        <Boton titulo="Editar" icono="create-outline" variante="secundario" onPress={alEditar} />
-        <Boton titulo="Borrar lote" icono="trash-outline" variante="peligro" onPress={alBorrar} />
-        <Boton
-          titulo="Cerrar ciclo"
-          icono="refresh-outline"
-          variante="secundario"
-          onPress={alCerrarCiclo}
-        />
-      </View>
-      <ResumenLote id={id} />
-      <ExportarReporte id={id} />
-      <Boton titulo="Registrar labor" icono="add" onPress={alRegistrarLabor} />
+      <EstadoDelReporte generando={generando} error={error} />
       <Aviso texto={aviso} />
-      <Texto variante="subtitulo">Bitácora de labores</Texto>
-      <Texto variante="ayuda">
-        Mantén presionada una labor para duplicarla con la fecha de hoy.
-      </Texto>
+      <ResumenLote id={id} alRegistrar={alRegistrarLabor} />
     </View>
   );
 }

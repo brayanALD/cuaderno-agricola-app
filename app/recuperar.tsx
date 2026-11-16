@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { Banner } from '@/components/Banner';
 import { Boton } from '@/components/Boton';
 import { FormularioRecuperar } from '@/components/formularios/FormularioRecuperar';
 import { Pantalla } from '@/components/Pantalla';
@@ -20,10 +21,11 @@ export default function Recuperar() {
       <Texto variante="titulo">Recupera tu contraseña</Texto>
       {enviado ? (
         <>
-          <Texto accessibilityLiveRegion="polite">
-            Si ese correo tiene una cuenta, te enviamos un mensaje con el enlace para crear una
-            contraseña nueva. Revisa también la carpeta de spam.
-          </Texto>
+          <Banner
+            icono="mail-outline"
+            titulo="Revisa tu correo"
+            texto="Si ese correo tiene una cuenta, te enviamos un mensaje con el enlace para crear una contraseña nueva. Revisa también la carpeta de spam."
+          />
           <Boton titulo="Volver a iniciar sesión" onPress={irAlLogin} />
         </>
       ) : (

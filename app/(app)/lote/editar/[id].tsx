@@ -14,7 +14,7 @@ export default function EditarLote() {
   const { actualizarLote } = useAcciones();
   const hoy = useHoy();
   return (
-    <Pantalla>
+    <Pantalla desplazable={false} relleno={false}>
       <Vista
         carga={lote}
         vacio={{
