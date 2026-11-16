@@ -68,9 +68,11 @@ La app no contiene `firebaseConfig` ni ninguna clave: la autenticación pasa por
 npm run check      # tipos + lint + formato + pruebas + hook de seguridad + contraste AA
 ```
 
-- **807 pruebas**, cobertura de **98,6 %** de sentencias y **93,7 %** de ramas (umbral del proyecto: 80 %).
+- **963 pruebas**, cobertura de **97,8 %** de sentencias y **92,2 %** de ramas (umbral del proyecto: 80 %).
 - Los sensores se prueban con mocks; la lógica va aparte en funciones puras.
 - Contraste WCAG AA de toda la paleta, claro y oscuro (`npm run check:contrast`).
+- Prueba de contrato con la API (`contrato/contrato.json`, copia idéntica de la de la API): `npm run check:contrato` la compara con la rama `main` de la API.
+- En GitHub, `.github/workflows/verificacion.yml` corre `npm run check` y `npm run check:contrato` en cada push a `main` y en cada pull request.
 
 ### APK
 

@@ -564,3 +564,10 @@ Validación: `npm run check` en verde (929 pruebas). Sin probar en teléfono: as
 Decisión: D99–D101. Sin dependencias nuevas ni cambios en la API.
 Rechazos/correcciones: se descartó una tabla de ajustes para «recordar por tipo» (se deriva de las labores); una prueba que simulaba el fin de la sincronización con SQL directo no refleja cómo se recarga la pantalla (solo `invalidar()` sube la versión), así que se quitó.
 
+## 2026-11-16 · Sesión 20 · CI y prueba de contrato (D102–D103)
+Propósito: GitHub Actions con `npm run check` y una prueba de contrato compartida con la API.
+Evidencia: `.github/workflows/verificacion.yml`, `scripts/comprobar-contrato.mjs`, `contrato/contrato.json`, `__tests__/contrato`.
+Validación: `npm run check` en verde (963 pruebas); el script de contrato se probó contra servidores locales (igual y distinto). La primera ejecución del CI no se pudo observar desde aquí.
+Decisión: D102–D103. Las funciones C1–C4 son solo del API; la app no cambió por ellas.
+Rechazos/correcciones: una prueba creaba una labor con cantidad negativa en SQLite (la base lo impide); se dividió el archivo de pruebas que pasó de 300 líneas.
+

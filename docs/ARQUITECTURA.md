@@ -130,6 +130,13 @@ Nueva labor ─ RepetirUltima ─ useUltimasLabores ─ ultimasLaboresPorTipo �
 Ficha del lote ─ GraficoProduccion (barras con View) ─ produccionDeLote
 ```
 
+## Contrato con la API y CI (D102–D103)
+
+```text
+contrato/contrato.json (copia de la API) ─ __tests__/contrato ─ envía · recibe · valida · servidor falso fiel
+GitHub Actions ─ npm ci → npm run check → npm run check:contrato (compara con main de la API)
+```
+
 ## Sesión y cuentas (D60, D63–D69)
 
 ```text

@@ -1,0 +1,300 @@
+{
+  "version": 1,
+  "descripcion": "Contrato entre la API y la app (sección 9 de la especificación y D93–D99 de la API). Fuente de verdad: el repositorio de la API; la app guarda una copia idéntica y su CI comprueba que no se haya quedado atrás. Cada repositorio lo verifica con sus propias pruebas.",
+  "recursos": {
+    "lotes": {
+      "campos": [
+        "nombre",
+        "cultivo",
+        "finca",
+        "area_m2",
+        "altitud_m",
+        "lat",
+        "lng",
+        "fecha_siembra"
+      ],
+      "opcionales": ["finca"],
+      "ejemplo": {
+        "nombre": "El Mirador",
+        "cultivo": "Café",
+        "finca": "La Aurora",
+        "area_m2": 5000,
+        "altitud_m": 1650.5,
+        "lat": 4.65,
+        "lng": -75.57,
+        "fecha_siembra": "2026-08-16"
+      },
+      "documento": {
+        "id": "lote-1",
+        "nombre": "El Mirador",
+        "cultivo": "Café",
+        "finca": "La Aurora",
+        "area_m2": 5000,
+        "altitud_m": 1650.5,
+        "lat": 4.65,
+        "lng": -75.57,
+        "fecha_siembra": "2026-08-16",
+        "created_at": "2026-11-01T15:04:05.000Z",
+        "updated_at": "2026-11-02T10:00:00.000Z",
+        "deleted_at": null
+      },
+      "invalidos": [
+        {
+          "motivo": "área 0",
+          "cambios": { "area_m2": 0 },
+          "campo": "area_m2",
+          "alcance": ["api", "app"]
+        },
+        {
+          "motivo": "altitud sobre 6000 m",
+          "cambios": { "altitud_m": 6001 },
+          "campo": "altitud_m",
+          "alcance": ["api", "app"]
+        },
+        {
+          "motivo": "nombre vacío",
+          "cambios": { "nombre": "   " },
+          "campo": "nombre",
+          "alcance": ["api", "app"]
+        },
+        {
+          "motivo": "fecha de siembra inexistente",
+          "cambios": { "fecha_siembra": "2026-02-30" },
+          "campo": "fecha_siembra",
+          "alcance": ["api", "app"]
+        },
+        {
+          "motivo": "latitud fuera de rango",
+          "cambios": { "lat": 91 },
+          "campo": "lat",
+          "alcance": ["api", "app"]
+        },
+        {
+          "motivo": "finca de más de 60 caracteres",
+          "cambios": { "finca": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" },
+          "campo": "finca",
+          "alcance": ["api", "app"]
+        }
+      ]
+    },
+    "labores": {
+      "campos": [
+        "lote_id",
+        "tipo",
+        "fecha",
+        "cantidad",
+        "unidad",
+        "nota",
+        "foto_url",
+        "luz",
+        "producto",
+        "carencia_dias",
+        "costo"
+      ],
+      "opcionales": ["producto", "carencia_dias", "costo"],
+      "ejemplo": {
+        "lote_id": "lote-1",
+        "tipo": "fumigacion",
+        "fecha": "2026-10-05",
+        "cantidad": 8,
+        "unidad": "L",
+        "nota": "Control de roya",
+        "foto_url": "https://tienda.public.blob.vercel-storage.com/usuarios/u1/foto-1.jpg",
+        "luz": "soleado",
+        "producto": "Mancozeb",
+        "carencia_dias": 21,
+        "costo": 35000
+      },
+      "documento": {
+        "id": "labor-1",
+        "lote_id": "lote-1",
+        "tipo": "fumigacion",
+        "fecha": "2026-10-05",
+        "cantidad": 8,
+        "unidad": "L",
+        "nota": "Control de roya",
+        "foto_url": "https://tienda.public.blob.vercel-storage.com/usuarios/u1/foto-1.jpg",
+        "luz": "soleado",
+        "producto": "Mancozeb",
+        "carencia_dias": 21,
+        "costo": 35000,
+        "created_at": "2026-11-01T15:04:05.000Z",
+        "updated_at": "2026-11-02T10:00:00.000Z",
+        "deleted_at": null
+      },
+      "invalidos": [
+        {
+          "motivo": "cantidad negativa",
+          "cambios": { "cantidad": -1 },
+          "campo": "cantidad",
+          "alcance": ["api", "app"]
+        },
+        {
+          "motivo": "tipo inventado",
+          "cambios": { "tipo": "baile" },
+          "campo": "tipo",
+          "alcance": ["api", "app"]
+        },
+        {
+          "motivo": "fecha mal escrita",
+          "cambios": { "fecha": "ayer" },
+          "campo": "fecha",
+          "alcance": ["api", "app"]
+        },
+        {
+          "motivo": "fecha futura (más de un día)",
+          "cambios": { "fecha": "2026-12-25" },
+          "campo": "fecha",
+          "alcance": ["api", "app"]
+        },
+        {
+          "motivo": "cosecha anterior a la siembra",
+          "cambios": { "tipo": "cosecha", "fecha": "2026-08-01" },
+          "campo": "fecha",
+          "alcance": ["api", "app"]
+        },
+        {
+          "motivo": "carencia de más de 365 días",
+          "cambios": { "carencia_dias": 400 },
+          "campo": "carencia_dias",
+          "alcance": ["api", "app"]
+        },
+        {
+          "motivo": "costo negativo",
+          "cambios": { "costo": -5 },
+          "campo": "costo",
+          "alcance": ["api", "app"]
+        },
+        {
+          "motivo": "foto que no es https",
+          "cambios": { "foto_url": "http://sitio.test/a.jpg" },
+          "campo": "foto_url",
+          "alcance": ["api"]
+        }
+      ]
+    },
+    "ciclos": {
+      "campos": ["lote_id", "cultivo", "fecha_inicio", "fecha_fin", "total_kg"],
+      "opcionales": [],
+      "ejemplo": {
+        "lote_id": "lote-1",
+        "cultivo": "Maíz",
+        "fecha_inicio": "2026-01-10",
+        "fecha_fin": "2026-06-15",
+        "total_kg": 320
+      },
+      "documento": {
+        "id": "ciclo-1",
+        "lote_id": "lote-1",
+        "cultivo": "Maíz",
+        "fecha_inicio": "2026-01-10",
+        "fecha_fin": "2026-06-15",
+        "total_kg": 320,
+        "created_at": "2026-11-01T15:04:05.000Z",
+        "updated_at": "2026-11-02T10:00:00.000Z",
+        "deleted_at": null
+      },
+      "invalidos": [
+        {
+          "motivo": "termina antes de empezar",
+          "cambios": { "fecha_fin": "2026-01-01" },
+          "campo": "fecha_fin",
+          "alcance": ["api"]
+        },
+        {
+          "motivo": "total negativo",
+          "cambios": { "total_kg": -1 },
+          "campo": "total_kg",
+          "alcance": ["api"]
+        },
+        {
+          "motivo": "cultivo vacío",
+          "cambios": { "cultivo": "" },
+          "campo": "cultivo",
+          "alcance": ["api"]
+        },
+        {
+          "motivo": "termina en el futuro",
+          "cambios": { "fecha_fin": "2026-12-25" },
+          "campo": "fecha_fin",
+          "alcance": ["api"]
+        }
+      ]
+    }
+  },
+  "version_base": {
+    "campo": "base_updated_at",
+    "recursos": ["lotes", "labores"],
+    "conflicto": { "estado": 409, "campo": "base_updated_at" }
+  },
+  "cambios": {
+    "ruta": "/api/sync",
+    "limite": 50,
+    "peticion": {
+      "cambios": [
+        {
+          "recurso": "lotes",
+          "id": "lote-1",
+          "cuerpo": {
+            "nombre": "El Mirador",
+            "cultivo": "Café",
+            "finca": "La Aurora",
+            "area_m2": 5000,
+            "altitud_m": 1650.5,
+            "lat": 4.65,
+            "lng": -75.57,
+            "fecha_siembra": "2026-08-16"
+          }
+        },
+        {
+          "recurso": "labores",
+          "id": "labor-1",
+          "cuerpo": {
+            "lote_id": "lote-1",
+            "tipo": "riego",
+            "fecha": "2026-10-05",
+            "cantidad": -1,
+            "unidad": "L",
+            "nota": null,
+            "foto_url": null,
+            "luz": null
+          }
+        },
+        { "recurso": "labores", "id": "labor-0", "borrado": true }
+      ]
+    },
+    "respuesta": {
+      "resultados": [
+        {
+          "recurso": "lotes",
+          "id": "lote-1",
+          "estado": 200,
+          "updated_at": "2026-11-15T10:00:00.000Z"
+        },
+        {
+          "recurso": "labores",
+          "id": "labor-1",
+          "estado": 400,
+          "error": "Datos inválidos",
+          "detalles": [{ "campo": "cantidad", "mensaje": "La cantidad no puede ser negativa." }]
+        },
+        { "recurso": "labores", "id": "labor-0", "estado": 404, "error": "No encontrado" }
+      ]
+    }
+  },
+  "consulta_labores": {
+    "parametros": ["lote_id", "tipo", "desde", "hasta", "limite", "cursor"],
+    "limite_por_defecto": 100,
+    "limite_maximo": 500,
+    "respuesta_con_filtros": ["items", "siguiente", "servidor_ahora"],
+    "respuesta_sincronizacion": ["items", "servidor_ahora"]
+  },
+  "error": {
+    "formato": "{ error, detalles? } con detalles = [{ campo, mensaje }]",
+    "peticion": { "recurso": "lotes", "cambios": { "area_m2": 0 } },
+    "ejemplo": {
+      "error": "Datos inválidos",
+      "detalles": [{ "campo": "area_m2", "mensaje": "El área debe ser mayor que 0." }]
+    }
+  }
+}

@@ -1,0 +1,33 @@
+name: Verificación
+
+# Corre `npm run check` (tipos, lint, formato, pruebas con cobertura, pruebas del hook y contraste AA) en cada push
+# a main y en cada pull request (D102). Es el mismo comando que se corre a mano.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verificacion-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      # El contrato con la API (D103): la copia de esta app tiene que ser idéntica a la de la API. Si la API lo
+      # cambió, este paso falla hasta que se copie `contrato/contrato.json` desde allí.
+      - run: npm run check:contrato
+        env:
+          CONTRATO_URL: https://raw.githubusercontent.com/${{ github.repository_owner }}/cuaderno-agricola-api/main/contrato/contrato.json
