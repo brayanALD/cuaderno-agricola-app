@@ -44,6 +44,16 @@ const PARES = [
   ['focus', 'surface', UI, 'anillo de foco en tarjeta'],
   ['success', 'surface', UI, 'iconos y barras de progreso/éxito (nunca texto)'],
   ['primary', 'surface', UI, 'relleno de controles (switch, checkbox)'],
+  // Contenedores suaves (rediseño D104): el texto va en `text`; el color de marca solo en iconos y bordes.
+  ['text', 'primarySoft', TEXT, 'texto sobre lo seleccionado o tonal'],
+  ['textMuted', 'primarySoft', TEXT, 'texto secundario sobre lo seleccionado'],
+  ['primary', 'primarySoft', UI, 'icono verde sobre fondo tonal (no es texto)'],
+  ['border', 'primarySoft', UI, 'borde de un control sobre fondo tonal'],
+  ['focus', 'primarySoft', UI, 'anillo de foco sobre fondo tonal'],
+  ['text', 'accentSoft', TEXT, 'texto de un aviso que no bloquea (carencia)'],
+  ['textMuted', 'accentSoft', TEXT, 'texto secundario de un aviso'],
+  ['text', 'dangerSoft', TEXT, 'texto sobre una labor vencida'],
+  ['danger', 'dangerSoft', TEXT, 'rojo sobre el fondo suave de las vencidas'],
 ];
 
 let fallos = 0;
