@@ -9,7 +9,7 @@ export interface Reporte {
   readonly exportar: (formato: FormatoReporte) => Promise<void>;
 }
 
-/** Exporta la bitácora de un lote a PDF o CSV (D95). Nunca lanza: si falla deja un mensaje. */
+/** Exporta la bitácora de un lote a PDF o Excel (D95). Nunca lanza: si falla deja un mensaje. */
 export function useReporte(loteId: string): Reporte {
   const { ctx } = useCuaderno();
   const [generando, setGenerando] = useState<FormatoReporte | null>(null);

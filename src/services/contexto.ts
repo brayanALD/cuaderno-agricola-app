@@ -13,7 +13,7 @@ export interface Contexto {
   readonly fotos: PuertoFotos;
   /** Avisos locales del recordatorio de riego (D90). */
   readonly notificaciones: PuertoNotificaciones;
-  /** Reportes en PDF y CSV para compartir (D95). */
+  /** Reportes en PDF y Excel para compartir (D95). */
   readonly reportes: PuertoReportes;
   /** UUID nuevo (D33: `expo-crypto`). */
   readonly nuevoId: () => string;

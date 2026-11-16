@@ -43,7 +43,7 @@ function MenuDeLote({ alEditar, alCerrarCiclo, alBorrar, exportar }: MenuProps) 
           icono: 'document-text-outline',
           alPulsar: () => void exportar('pdf'),
         },
-        { titulo: 'Exportar CSV', icono: 'grid-outline', alPulsar: () => void exportar('csv') },
+        { titulo: 'Exportar Excel', icono: 'grid-outline', alPulsar: () => void exportar('xlsx') },
         { titulo: 'Borrar lote', icono: 'trash-outline', alPulsar: alBorrar, peligro: true },
       ]}
     />
@@ -63,7 +63,7 @@ function EstadoDelReporte({
       {generando === null ? null : (
         <Banner
           icono="document-text-outline"
-          texto={`Generando ${generando === 'pdf' ? 'el PDF' : 'el CSV'}…`}
+          texto={`Generando ${generando === 'pdf' ? 'el PDF' : 'el Excel'}…`}
         />
       )}
       {error === null ? null : <Banner tono="error" icono="alert-circle" texto={error} />}

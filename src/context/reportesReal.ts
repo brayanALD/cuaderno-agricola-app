@@ -21,11 +21,15 @@ export const reportesReal: PuertoReportes = {
     new File(uri).move(destino);
     await compartir(destino.uri, 'application/pdf', 'Compartir el reporte en PDF');
   },
-  async compartirCsv(csv, nombre) {
+  async compartirXlsx(libro, nombre) {
     const archivo = new File(Paths.cache, nombre);
     if (archivo.exists) archivo.delete();
     archivo.create();
-    archivo.write(csv);
-    await compartir(archivo.uri, 'text/csv', 'Compartir el reporte en CSV');
+    archivo.write(libro);
+    await compartir(
+      archivo.uri,
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Compartir el reporte en Excel',
+    );
   },
 };

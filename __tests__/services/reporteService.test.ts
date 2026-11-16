@@ -1,10 +1,12 @@
 import {
   exportarReporte,
   nombreDeReporte,
-  reporteCsv,
   reporteHtml,
   type DatosReporte,
 } from '@/services/reporteService';
+import { strFromU8, unzipSync } from 'fflate';
+import { reporteXlsx } from '@/services/reporteXlsx';
+import { TEMA } from '@/services/plantillaReporte';
 import { cerrarCiclo } from '@/services/cicloService';
 import { crearLabor } from '@/services/laborService';
 import { crearLote } from '@/services/loteService';
@@ -83,30 +85,101 @@ describe('reporteHtml (D95)', () => {
   });
 });
 
-describe('reporteCsv', () => {
-  it('usa punto y coma, BOM para los acentos y una fila por labor', () => {
-    const csv = reporteCsv(datos());
-    const lineas = csv.slice(1).trim().split('\r\n');
+const abrir = (bytes: Uint8Array) =>
+  Object.fromEntries(Object.entries(unzipSync(bytes)).map(([n, b]) => [n, strFromU8(b)]));
 
-    expect(csv.startsWith('\uFEFF')).toBe(true);
-    expect(lineas[0]).toBe(
-      'Lote;Cultivo;Fecha;Labor;Cantidad;Unidad;Producto;Carencia (días);Costo;Luz;Nota',
-    );
-    expect(lineas[1]).toBe(
-      'El Mirador;Café;2026-11-01;Fumigación;8;L;Mancozeb;21;35000;;Control de roya',
-    );
+describe('reporteXlsx (D107)', () => {
+  it('es un .xlsx válido: un ZIP con el libro, los estilos y las dos hojas', () => {
+    const archivos = abrir(reporteXlsx(datos()));
+
+    expect(Object.keys(archivos).sort()).toEqual([
+      '[Content_Types].xml',
+      '_rels/.rels',
+      'xl/_rels/workbook.xml.rels',
+      'xl/styles.xml',
+      'xl/workbook.xml',
+      'xl/worksheets/sheet1.xml',
+      'xl/worksheets/sheet2.xml',
+    ]);
+    expect(archivos['xl/workbook.xml']).toContain('name="Resumen"');
+    expect(archivos['xl/workbook.xml']).toContain('name="Bitácora"');
   });
 
-  it('pone entre comillas lo que lleva ; o comillas, y desactiva las fórmulas de Excel', () => {
-    const csv = reporteCsv(
-      datos({
-        labores: [laborFila({ nota: 'dijo "ya"; listo', producto: '=HYPERLINK("http://x")' })],
-      }),
-    );
+  it('la plantilla usa los colores del tema claro de la app', () => {
+    const estilos = abrir(reporteXlsx(datos()))['xl/styles.xml'] ?? '';
 
-    expect(csv).toContain('"dijo ""ya""; listo"');
-    expect(csv).toContain('"\'=HYPERLINK(""http://x"")"');
-    expect(csv).not.toContain(';=HYPERLINK');
+    for (const color of [TEMA.primary, TEMA.primarySoft, TEMA.surfaceMuted, TEMA.divider]) {
+      expect(estilos).toContain(`FF${color.replace('#', '')}`);
+    }
+  });
+
+  it('la bitácora lleva encabezado fijo, filtro y una fila por labor con números reales', () => {
+    const hoja = abrir(reporteXlsx(datos()))['xl/worksheets/sheet2.xml'] ?? '';
+
+    expect(hoja).toContain('state="frozen"');
+    expect(hoja).toContain('<autoFilter ref="A3:I4"/>');
+    expect(hoja).toContain('Fumigación');
+    expect(hoja).toContain('Mancozeb');
+    expect(hoja).toContain('<c r="C4" s="9"><v>8</v></c>');
+    expect(hoja).toContain('<c r="G4" s="9"><v>35000</v></c>');
+  });
+
+  it('el resumen trae los datos del lote y, si hay, los ciclos anteriores', () => {
+    const sin = abrir(reporteXlsx(datos()))['xl/worksheets/sheet1.xml'] ?? '';
+    expect(sin).toContain('El Mirador');
+    expect(sin).toContain('La Aurora');
+    expect(sin).not.toContain('Ciclos anteriores');
+
+    const con =
+      abrir(
+        reporteXlsx(
+          datos({
+            ciclos: [
+              {
+                id: 'c1',
+                lote_id: 'lote-1',
+                cultivo: 'Maíz',
+                fecha_inicio: '2026-01-10',
+                fecha_fin: '2026-06-15',
+                total_kg: 320,
+                created_at: 'x',
+                updated_at: 'x',
+                deleted_at: null,
+                pending: 0,
+                sync_error: null,
+              },
+            ],
+          }),
+        ),
+      )['xl/worksheets/sheet1.xml'] ?? '';
+    expect(con).toContain('Ciclos anteriores');
+    expect(con).toContain('<v>320</v>');
+  });
+
+  it('lo que escribió el usuario nunca es una fórmula ni rompe el XML', () => {
+    const hoja =
+      abrir(
+        reporteXlsx(
+          datos({
+            labores: [laborFila({ nota: '=HYPERLINK("http://x")<&>\u0001', producto: '+cmd' })],
+          }),
+        ),
+      )['xl/worksheets/sheet2.xml'] ?? '';
+
+    expect(hoja).toContain('t="inlineStr"');
+    expect(hoja).not.toContain('<f>');
+    expect(hoja).toContain('=HYPERLINK(&quot;http://x&quot;)&lt;&amp;&gt;');
+    expect(hoja).not.toContain('\u0001');
+  });
+});
+
+describe('plantilla del PDF', () => {
+  it('usa los colores del tema claro de la app', () => {
+    const html = reporteHtml(datos());
+
+    expect(html).toContain(TEMA.primary);
+    expect(html).toContain(TEMA.surfaceMuted);
+    expect(html).toContain('class="banda"');
   });
 });
 
@@ -146,7 +219,7 @@ describe('exportarReporte', () => {
     expect(reportes.compartidos[0]?.contenido).toContain('Finca: La Aurora');
   });
 
-  it('comparte el CSV e incluye los ciclos cerrados en el PDF', async () => {
+  it('comparte el Excel e incluye los ciclos cerrados en el PDF', async () => {
     const { ctx, reportes } = await montar();
     await cerrarCiclo(ctx, 'id-1', {
       fecha_fin: '2026-11-10',
@@ -154,11 +227,11 @@ describe('exportarReporte', () => {
       fecha_siembra: '2026-11-12',
     });
 
-    await exportarReporte(ctx, 'id-1', 'csv');
+    await exportarReporte(ctx, 'id-1', 'xlsx');
     await exportarReporte(ctx, 'id-1', 'pdf');
 
-    expect(reportes.compartidos.map((r) => r.tipo)).toEqual(['csv', 'pdf']);
-    expect(reportes.compartidos[0]?.nombre).toBe('cuaderno-el-mirador-2026-11-14.csv');
+    expect(reportes.compartidos.map((r) => r.tipo)).toEqual(['xlsx', 'pdf']);
+    expect(reportes.compartidos[0]?.nombre).toBe('cuaderno-el-mirador-2026-11-14.xlsx');
     expect(reportes.compartidos[1]?.contenido).toContain('Ciclos anteriores');
   });
 
@@ -175,6 +248,6 @@ describe('exportarReporte', () => {
   it('un lote que no existe da un error', async () => {
     const { ctx } = await montar();
 
-    expect((await exportarReporte(ctx, 'no-existe', 'csv')).ok).toBe(false);
+    expect((await exportarReporte(ctx, 'no-existe', 'xlsx')).ok).toBe(false);
   });
 });

@@ -101,7 +101,7 @@ notificacionesReal: expo-notifications · canal «riego» · cancelAll + schedul
 Lote ─ CabeceraDeLote ─ «Cerrar ciclo» ─ FormularioCiclo ─ cicloService.cerrarCiclo ─ tabla ciclo (+ lote nuevo ciclo)
 Labor ─ CamposLabor ─ producto · carencia_dias · costo ─ carencia.ts (función pura) ─ AvisoDeCarencia (no bloquea)
 ResumenLote ─ produccionDeLote (desde la siembra vigente): kg por mes · costo total · costo por kg
-«Exportar PDF/CSV» ─ useReporte ─ reporteService (HTML escapado / CSV sin fórmulas) ─ PuertoReportes ─ expo-print · expo-sharing
+«Exportar PDF/Excel» ─ useReporte ─ reporteService (HTML escapado / Excel con plantilla) ─ PuertoReportes ─ expo-print · expo-sharing
 ```
 
 Sincronización: lotes → ciclos → fotos → labores al subir; lotes → ciclos → labores al bajar. Los campos nuevos

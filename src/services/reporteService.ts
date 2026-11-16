@@ -6,7 +6,9 @@ import { formatearCantidad } from './cantidad';
 import type { Contexto } from './contexto';
 import { ETIQUETA_LUZ, ETIQUETA_TIPO } from './etiquetas';
 import { formatearFecha } from './fechas';
+import { COLUMNAS, CSS_REPORTE } from './plantillaReporte';
 import { produccionDeLote, type Produccion } from './produccionService';
+import { reporteXlsx } from './reporteXlsx';
 import { exito, fallo, type Resultado } from './resultado';
 
 export interface DatosReporte {
@@ -18,7 +20,7 @@ export interface DatosReporte {
   readonly hoy: string;
 }
 
-export type FormatoReporte = 'pdf' | 'csv';
+export type FormatoReporte = 'pdf' | 'xlsx';
 
 /** El contenido del reporte viene de lo que escribió el usuario: se escapa SIEMPRE antes de meterlo en HTML. */
 const escapar = (texto: string): string =>
@@ -31,18 +33,6 @@ const escapar = (texto: string): string =>
 
 const o = (valor: string | number | null): string => (valor === null ? '' : String(valor));
 const dinero = (valor: number | null): string => (valor === null ? '' : formatearCantidad(valor));
-
-const COLUMNAS = [
-  'Fecha',
-  'Labor',
-  'Cantidad',
-  'Unidad',
-  'Producto',
-  'Carencia (días)',
-  'Costo',
-  'Luz',
-  'Nota',
-] as const;
 
 /** Una labor como fila del reporte, en el mismo orden que `COLUMNAS`. */
 function filaDeLabor(labor: LaborFila): string[] {
@@ -87,37 +77,21 @@ function resumenHtml({ lote, produccion, ciclos }: DatosReporte): string {
   );
 }
 
-/** Reporte de trazabilidad de un lote como HTML sencillo (para convertirlo en PDF). Función pura. */
+/** Reporte de trazabilidad de un lote como HTML con la plantilla de la app (para convertirlo en PDF). Función pura. */
 export function reporteHtml(datos: DatosReporte): string {
   const filas = datos.labores.map((labor) => `<tr>${celdas(filaDeLabor(labor), 'td')}</tr>`);
   return `<!doctype html><html lang="es"><head><meta charset="utf-8">
-<style>body{font-family:sans-serif;font-size:12px}h1{font-size:20px}h2{font-size:15px}
-table{border-collapse:collapse;width:100%}th,td{border:1px solid gray;padding:4px;text-align:left}</style>
+<style>${CSS_REPORTE}</style>
 </head><body>
-<h1>Cuaderno de campo: ${escapar(datos.lote.nombre)}</h1>
-<p>Generado el ${escapar(formatearFecha(datos.hoy))}. ${String(datos.labores.length)} labores.</p>
+<div class="banda"><div class="marca">Cuaderno de campo</div>
+<h1>Cuaderno de campo: ${escapar(datos.lote.nombre)}</h1></div>
+<div class="cuerpo">
+<p class="nota">Generado el ${escapar(formatearFecha(datos.hoy))}. ${String(datos.labores.length)} labores.</p>
 ${resumenHtml(datos)}
 <h2>Bitácora de labores</h2>
 <table><thead><tr>${celdas(COLUMNAS, 'th')}</tr></thead><tbody>${filas.join('')}</tbody></table>
+</div>
 </body></html>`;
-}
-
-/**
- * Un valor de CSV: entre comillas si lleva separador, comillas o salto de línea; y con un apóstrofo delante si
- * empieza por `=`, `+`, `-` o `@`, para que Excel no lo ejecute como fórmula (lo escribió el usuario).
- */
-function valorCsv(valor: string): string {
-  const seguro = /^[=+\-@]/.test(valor) ? `'${valor}` : valor;
-  return /[;"\n\r]/.test(seguro) ? `"${seguro.replace(/"/g, '""')}"` : seguro;
-}
-
-/** La bitácora del lote como CSV con `;` (lo que Excel en español abre bien) y BOM para los acentos. */
-export function reporteCsv(datos: DatosReporte): string {
-  const filas = [
-    ['Lote', 'Cultivo', ...COLUMNAS],
-    ...datos.labores.map((labor) => [datos.lote.nombre, datos.lote.cultivo, ...filaDeLabor(labor)]),
-  ];
-  return `﻿${filas.map((fila) => fila.map(valorCsv).join(';')).join('\r\n')}\r\n`;
 }
 
 /** Nombre de archivo sin caracteres raros: `cuaderno-el-mirador-2026-11-16`. */
@@ -149,7 +123,7 @@ export async function exportarReporte(
   const nombre = nombreDeReporte(lote, datos.hoy);
   try {
     if (formato === 'pdf') await ctx.reportes.compartirPdf(reporteHtml(datos), `${nombre}.pdf`);
-    else await ctx.reportes.compartirCsv(reporteCsv(datos), `${nombre}.csv`);
+    else await ctx.reportes.compartirXlsx(reporteXlsx(datos), `${nombre}.xlsx`);
   } catch {
     return fallo({ general: 'No se pudo generar el reporte. Inténtalo de nuevo.' });
   }

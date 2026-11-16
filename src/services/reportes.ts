@@ -5,6 +5,6 @@
 export interface PuertoReportes {
   /** Convierte el HTML en un PDF y abre el menú «Compartir» del sistema. */
   readonly compartirPdf: (html: string, nombre: string) => Promise<void>;
-  /** Guarda el texto como `.csv` (se abre en Excel) y abre el menú «Compartir». */
-  readonly compartirCsv: (csv: string, nombre: string) => Promise<void>;
+  /** Guarda los bytes como `.xlsx` (se abre en Excel) y abre el menú «Compartir». */
+  readonly compartirXlsx: (libro: Uint8Array, nombre: string) => Promise<void>;
 }
