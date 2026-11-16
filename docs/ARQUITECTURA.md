@@ -152,6 +152,22 @@ RootLayout ─ SesionProvider (restaura la sesión SIN red) ─ NavegacionRaiz (
   con la sesión guardada. Si la API rechaza la renovación del token (sesión caducada o cuenta deshabilitada), se vuelve al login.
 - La sincronización usa `cliente.pedir` (renovación única de token incluida): ver «Modelo de datos y sincronización».
 
+## Experiencia rediseñada (D104–D106)
+
+```text
+Pestañas ─ useInsignias (useResumen · usePendientes) ─ insignia de Labores (hoy o vencidas) y de Cuenta (avisos)
+Lotes ─ FilaLote + FranjaDeLabor (proximasLaboresPorLote) · PanelResumen · BarraDeBusqueda · Fab
+Lote ─ FichaLote(⋮ MenuDeAcciones) · ResumenLote{Carencia · TarjetaProximaLabor · TarjetaProduccion · CiclosAnteriores}
+       · BitacoraLote{FiltroPorTipo · ConsejoDeGestos · FilaLabor}
+Formularios ─ DisposicionDeFormulario{ScrollView + barra fija} ─ SelectorDeTipo · FechaRapida · SelectorDeUnidad(HojaInferior) · SeccionPlegable
+Cuenta ─ PanelSincronizacion ─ HojaDeSincronizacion ─ usePendientesDetalle ─ pendientesService ─ estadoSyncRepository.listarPendientes
+Apariencia ─ AparienciaProvider (raíz) ─ aparienciaReal (expo-secure-store) ─ Appearance.setColorScheme ─ EsquemaProvider
+Consejo de una vez ─ useConsejo ─ ajustesService ─ ajusteRepository (tabla ajustes)
+```
+
+- La apariencia vive en la raíz, sobre `EsquemaProvider`, y se guarda en el dispositivo (no en la base del usuario, que se abre más abajo).
+- Las hojas y menús son `Modal`s de React Native (sin dependencias nuevas); respetan «reducir movimiento».
+
 ## Seguridad
 
 Sin credenciales en la app. Única variable pública: `EXPO_PUBLIC_API_URL`. Tokens en `expo-secure-store`. HTTPS siempre; sin

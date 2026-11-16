@@ -574,6 +574,20 @@ Rechazos/correcciones: una prueba creaba una labor con cantidad negativa en SQLi
 ## 2026-11-16 · Sesión 21 · APK con A1–D4
 Propósito: nuevo APK de prueba con todas las funciones nuevas contra la API ya desplegada.
 Evidencia: `app.json` con `versionCode` 2 (para actualizar el APK anterior); build de EAS `af34d6b9-4982-4941-acb6-8c5a9946e64d`, perfil `preview`, lanzado con `EAS_NO_VCS=1` por orden de Brayan.
-Validación: la API de producción se verificó el mismo día (ver la bitácora de la API). El resultado del build y la prueba del APK en los teléfonos se anotan cuando terminen.
+Validación: la API de producción se verificó el mismo día (ver la bitácora de la API). Build terminado (`FINISHED`, versionCode 2): APK en `https://expo.dev/artifacts/eas/XHUFXSIT1ObRTyIxtCSIxMTRi4Sr6E7WfPH4g9xTzY8.apk`. La prueba del APK en los teléfonos queda pendiente.
 Decisión: sin cambios de código en la app.
+
+## 2026-11-16 · Sesión 22 · Rediseño UX/UI integral (D104–D106)
+Propósito: auditar la app, definir una dirección visual y rediseñar toda la experiencia, por etapas y con la aprobación de Brayan de cada decisión nueva.
+Evidencia: artefacto de Claude Design (15 láminas, revisado y corregido con capturas locales); `palette.json` con 4 tokens; componentes base (`Banner`, `Esqueleto`, `Fab`, `Chip`, `MenuDeAcciones`, `HojaInferior`…); pestañas, detalle del lote, formularios, Cuenta con hoja de sincronización y apariencia, acceso, visor de foto; icono nuevo en `assets/` y `monochromeImage`.
+Validación: línea base `npm run check` verde (101 suites, 963 pruebas); tras cada etapa `tsc`, `eslint` y `jest` en verde; `expo export --platform android` compila. Sin probar en teléfono: el aspecto real (colores, espacios, 360 dp del Redmi A2), TalkBack, los menús y las hojas, la apariencia fija en el APK y el icono nuevo (requiere `eas build`).
+Decisión: D104 (tokens y dirección), D105 (rediseño, cambia D99) y D106 (icono). Skills: se usaron `expo-design-system` y `expo-animation` del proyecto; `/find-skills` no instaló nada.
+Rechazos/correcciones: `git status` lo denegó el clasificador (no se comprobó el estado de Git); `Appearance.setColorScheme` en RN 0.88 no acepta `null` (se usa «auto»); el dispositivo de pruebas numera los lotes `a-1`, no `id-1`; la cortina de la hoja no debe ser un botón hermano de la zona modal (el botón «Cerrar» va dentro).
+
+## 2026-11-16 · Sesión 23 · APK con el rediseño
+Propósito: nuevo APK de prueba con el rediseño UX/UI (D104–D106), por orden de Brayan.
+Evidencia: `app.json` con `versionCode` 3 (para actualizar el APK anterior); build de EAS `452dc8c4-c207-494b-a04e-f92a34f34ffd`, perfil `preview`, lanzado con `EAS_NO_VCS=1` (sube el directorio de trabajo, no solo lo commiteado).
+Validación: estado `FINISHED`, versionCode 3; APK en `https://expo.dev/artifacts/eas/5yNS81ArV5-rpiVcEgxY7BuNZjD7UB91nucJ9UjhyoU.apk`. Sin probar en teléfono todavía: aspecto real, TalkBack, menús, hojas, apariencia fija e icono nuevo.
+Decisión: solo se subió `versionCode`; sin otros cambios de código.
+Rechazos/correcciones: el primer intento falló porque `npx eas` no existe como ejecutable local (se usa `npx eas-cli`); se informó como lanzado antes de comprobarlo y se corrigió al ver el registro.
 

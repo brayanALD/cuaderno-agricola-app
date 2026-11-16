@@ -47,17 +47,32 @@ en lugar de grises puros. La sospecha de partida se confirmó con números:
 | background | `#F4F7F5` | `#041F1E` |
 | surface | `#FFFFFF` | `#073B3A` |
 | surfaceMuted | `#E6EDEA` | `#0B4A47` |
+| divider (D104) | `#D5E0DC` | `#1B5551` |
 | text | `#0B1F1E` | `#EAF3F0` |
 | textMuted | `#475957` | `#B4CCC7` |
 | border (controles) | `#6F817D` | `#7FA39D` |
 | primary / onPrimary | `#0B6E4F` / `#FFFFFF` | `#6BBF59` / `#041F1E` |
+| primarySoft (D104) | `#D8EBE2` | `#12513F` |
 | accent / onAccent | `#DDB771` / `#073B3A` | `#DDB771` / `#041F1E` |
+| accentSoft (D104) | `#F7ECD3` | `#3E3A22` |
 | success | `#08A045` | `#6BBF59` |
 | danger / onDanger | `#B3261E` / `#FFFFFF` | `#FFB4AB` / `#410002` |
+| dangerSoft (D104) | `#FBE4E1` | `#4D2623` |
 | focus | `#073B3A` | `#DDB771` |
 
-Resultado actual: **40/40 pares cumplen AA** (20 por tema). Mínimos reales: 3,43:1 (success sobre blanco, límite UI de 3:1) y
-4,50:1 (borde sobre superficie oscura, límite de 3:1).
+Resultado actual: **58/58 pares cumplen AA** (29 por tema). Mínimos reales: 3,31:1 (borde sobre `primarySoft` claro, límite UI de
+3:1) y 3,43:1 (success sobre blanco, límite UI de 3:1).
+
+## Papel de cada color (rediseño, D104)
+
+- **Verde (`primary`)**: la acción principal y lo seleccionado. Un solo botón verde por pantalla.
+- **Dorado (`accent`)**: «toca hoy» y los avisos que no bloquean (carencia). Texto siempre oscuro (`onAccent`).
+- **Rojo (`danger`)**: error, labor vencida y borrar. Se usa como fondo suave (`dangerSoft`), no a pantalla llena.
+- **Neutro (`surfaceMuted`)**: información (días desde la siembra, «pendiente de enviar»). Lo normal no llama la atención.
+- **Fondos suaves** (`primarySoft`, `accentSoft`, `dangerSoft`): el texto va en `text` (o `danger` sobre `dangerSoft`); el verde
+  queda para iconos y bordes. En oscuro `primary` sobre `primarySoft` es 4,05:1: vale como icono (≥ 3:1), no como texto.
+- **`divider`** es el borde de las tarjetas (decorativo); `border` es solo para controles que deben verse (≥ 3:1).
+- Nunca solo color: cada estado lleva icono y palabra.
 
 ## Uso en NativeWind v5 (decisión D17)
 
@@ -73,13 +88,12 @@ claro y fija `:root { font-size: 16px }` (D53).
 claro u oscuro de `palette.json` según el ajuste del sistema; las clases (`bg-background`, `text-text`…) no cambian. Lo que no
 usa clases (iconos, pestañas, encabezados) toma los colores de `useColores()`. Pruebas: `__tests__/theme/`.
 
-**Componentes base (`src/components/`).** `Texto` (variante + tono, para que dos clases de color nunca compitan), `Boton`,
-`BotonIcono` (etiqueta obligatoria), `CampoTexto`, `Selector` (grupo de opciones con ✓), `CampoFecha`, `MensajeError`,
-`Estados` + `Vista` (los 4 estados), `Pantalla`. Todo control táctil mide ≥ 48 dp y tiene borde de foco; los errores son icono +
-texto y se anuncian; el gesto de cada acción tiene su botón con `accessibilityLabel`.
+**Componentes base (`src/components/`).** `Texto` (variante + tono, para que dos clases de color nunca compitan; `metrica` para las cifras), `Boton` (primario, tonal, secundario, peligro, peligroSuave, texto), `BotonIcono` (etiqueta obligatoria), `Chip`, `Fab`, `CampoTexto`, `BarraDeBusqueda`, `Selector` (grupo de opciones con ✓), `SelectorDeTipo`, `FechaRapida`, `CampoFecha`, `Banner` (info / aviso / error), `Insignia` (dorado / neutro / peligro / marca), `Tarjeta` (normal / aviso / peligro), `MenuDeAcciones` (⋮), `HojaInferior`, `SeccionPlegable`, `Estados` + `Vista` (los 4 estados; la carga es un esqueleto de `esqueletos.tsx`), `Pantalla`. Todo control táctil mide ≥ 48 dp y tiene borde de foco; los errores son icono + texto y se anuncian; el gesto de cada acción tiene su botón con `accessibilityLabel` y, en las filas de labor, acciones propias para TalkBack. Los estados vacíos usan un círculo tonal con un punto dorado (sin librería de dibujo).
+
+**Reglas de composición (D104–D105).** Una acción principal por pantalla (verde); las demás, tonales o de texto. Lo opcional va plegado («Más detalles»). Lo normal no se anuncia (una fila sincronizada no dice nada). Los formularios tienen la misma forma: campos que se desplazan y la barra de guardado fija abajo. Las ayudas fijas se sustituyen por consejos de una sola vez.
 
 ## Límites honestos
 
 - El script mide contraste de pares de color; **no** sustituye una auditoría de accesibilidad. Queda por hacer: prueba manual
-  con **TalkBack** en el A35, texto al 200 %, tamaño de objetivos y orden de foco.
+  con **TalkBack** en el A35 y el A2, texto al 200 %, tamaño de objetivos y orden de foco, **y ver el rediseño en los teléfonos** (D104–D106 se verificó con pruebas y compilación, no en pantalla real).
 - El contraste real en pantalla varía con el brillo y el panel (probar al aire libre: es una app de campo).

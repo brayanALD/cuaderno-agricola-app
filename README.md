@@ -17,6 +17,30 @@ Proyecto 37 de Desarrollo Móvil · autor: Brayan Aldana.
 |---|---|---|---|
 | ![Labores](docs/capturas/04-labores.png) | ![Nueva labor](docs/capturas/05-nueva-labor.png) | ![Foto](docs/capturas/06-foto.png) | ![Cuenta](docs/capturas/07-cuenta.png) |
 
+## Rediseño UX/UI
+
+Láminas de la propuesta visual (D104–D106), hechas con Claude Design. Los colores de marca no cambian; cada tema (claro y oscuro) tiene su propia composición.
+
+| Identidad | Sistema visual |
+|---|---|
+| ![Identidad](docs/diseno/01-identidad.png) | ![Sistema visual](docs/diseno/02-sistema-visual.png) |
+
+| Lotes | Detalle del lote |
+|---|---|
+| ![Lotes](docs/diseno/05-lotes.png) | ![Detalle del lote](docs/diseno/06-detalle-lote.png) |
+
+| Labores | Cuenta |
+|---|---|
+| ![Labores](docs/diseno/07-labores.png) | ![Cuenta](docs/diseno/09-cuenta.png) |
+
+| Nueva labor | Acceso |
+|---|---|
+| ![Nueva labor](docs/diseno/08-nueva-labor.png) | ![Acceso](docs/diseno/04-acceso.png) |
+
+| Componentes | Estados | Menús y hojas | Visor de foto |
+|---|---|---|---|
+| ![Componentes](docs/diseno/03-componentes.png) | ![Estados](docs/diseno/10-estados.png) | ![Menús y hojas](docs/diseno/11-menus-y-hojas.png) | ![Visor de foto](docs/diseno/12-visor-de-foto.png) |
+
 ## Qué hace
 
 | Requisito | Cómo se ve en la app |
