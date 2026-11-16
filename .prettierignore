@@ -1,0 +1,9 @@
+.claude
+.expo
+.scaffold-tmp
+coverage
+dist
+node_modules
+package-lock.json
+src/theme/theme.css
+*.md

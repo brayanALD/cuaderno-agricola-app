@@ -1,0 +1,39 @@
+# dependencias y build
+node_modules/
+.expo/
+.next/
+dist/
+web-build/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+expo-env.d.ts
+.vercel/
+
+# secretos: la IA no los lee y Git no los versiona (env.example SÍ se versiona)
+.env*
+*.pem
+*.key
+*.jks
+*.keystore
+*firebase-adminsdk*.json
+google-services.json
+GoogleService-Info.plist
+
+# nativo generado (el proyecto es managed)
+/android
+/ios
+
+# emuladores y registros
+.firebase/
+firebase-debug.log*
+*.log
+
+# SO / editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# preferencias personales de Claude Code
+.claude/settings.local.json

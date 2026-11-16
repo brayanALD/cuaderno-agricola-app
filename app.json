@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "Cuaderno agrícola",
+    "slug": "cuaderno-agricola",
+    "version": "0.1.0",
+    "scheme": "cuaderno-agricola",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "icon": "./assets/icon.png",
+    "android": {
+      "package": "com.cuadernoagricola.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0B6E4F"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "@react-native-community/datetimepicker",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#0B6E4F"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "La cámara se usa solo para fotografiar las labores del cuaderno.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "backgroundColor": "#073B3A"
+        }
+      ],
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

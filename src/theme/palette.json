@@ -1,0 +1,37 @@
+{
+  "_fuente": "Paleta base: verde-esmeralda-dorado (Coolors) = #073b3a #0b6e4f #08a045 #6bbf59 #ddb771. Neutros, danger y focus derivados; ver docs/DISENO.md.",
+  "light": {
+    "background": "#F4F7F5",
+    "surface": "#FFFFFF",
+    "surfaceMuted": "#E6EDEA",
+    "text": "#0B1F1E",
+    "textMuted": "#475957",
+    "border": "#6F817D",
+    "primary": "#0B6E4F",
+    "onPrimary": "#FFFFFF",
+    "primaryPressed": "#073B3A",
+    "accent": "#DDB771",
+    "onAccent": "#073B3A",
+    "success": "#08A045",
+    "danger": "#B3261E",
+    "onDanger": "#FFFFFF",
+    "focus": "#073B3A"
+  },
+  "dark": {
+    "background": "#041F1E",
+    "surface": "#073B3A",
+    "surfaceMuted": "#0B4A47",
+    "text": "#EAF3F0",
+    "textMuted": "#B4CCC7",
+    "border": "#7FA39D",
+    "primary": "#6BBF59",
+    "onPrimary": "#041F1E",
+    "primaryPressed": "#8ED17F",
+    "accent": "#DDB771",
+    "onAccent": "#041F1E",
+    "success": "#6BBF59",
+    "danger": "#FFB4AB",
+    "onDanger": "#410002",
+    "focus": "#DDB771"
+  }
+}

@@ -1,0 +1,39 @@
+/* GENERADO por scripts/gen-theme-css.mjs desde src/theme/palette.json. No editar a mano. */
+/* Valores del tema claro. El oscuro lo aplica EsquemaProvider en tiempo de ejecución (D46): */
+/* @theme genera las utilidades (bg-background…) y :root da el valor de arranque. */
+@theme {
+  --color-background: #F4F7F5;
+  --color-surface: #FFFFFF;
+  --color-surface-muted: #E6EDEA;
+  --color-text: #0B1F1E;
+  --color-text-muted: #475957;
+  --color-border: #6F817D;
+  --color-primary: #0B6E4F;
+  --color-on-primary: #FFFFFF;
+  --color-primary-pressed: #073B3A;
+  --color-accent: #DDB771;
+  --color-on-accent: #073B3A;
+  --color-success: #08A045;
+  --color-danger: #B3261E;
+  --color-on-danger: #FFFFFF;
+  --color-focus: #073B3A;
+}
+
+:root {
+  font-size: 16px;
+  --color-background: #F4F7F5;
+  --color-surface: #FFFFFF;
+  --color-surface-muted: #E6EDEA;
+  --color-text: #0B1F1E;
+  --color-text-muted: #475957;
+  --color-border: #6F817D;
+  --color-primary: #0B6E4F;
+  --color-on-primary: #FFFFFF;
+  --color-primary-pressed: #073B3A;
+  --color-accent: #DDB771;
+  --color-on-accent: #073B3A;
+  --color-success: #08A045;
+  --color-danger: #B3261E;
+  --color-on-danger: #FFFFFF;
+  --color-focus: #073B3A;
+}

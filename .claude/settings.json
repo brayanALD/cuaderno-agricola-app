@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "defaultMode": "plan",
+    "disableBypassPermissionsMode": "disable",
+    "blockReadsOutsideWorkingDirectories": true,
+    "blockWritesOutsideWorkingDirectories": true,
+    "deny": [
+      "Read(**/.env*)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*firebase-adminsdk*.json)",
+      "Read(**/*.keystore)",
+      "Read(**/*.jks)",
+      "Edit(**/.env*)",
+      "Edit(./.claude/**)",
+      "Bash(sudo *)",
+      "Bash(rm -rf *)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * --force*)",
+      "Bash(git reset --hard*)",
+      "Bash(vercel env pull*)"
+    ],
+    "ask": [
+      "Bash(git *)",
+      "Bash(npm install*)",
+      "Bash(npm i *)",
+      "Bash(npm ci*)",
+      "Bash(npm uninstall*)",
+      "Bash(npx *)",
+      "Bash(eas *)",
+      "Bash(vercel *)",
+      "Bash(firebase *)"
+    ],
+    "allow": [
+      "Bash(npm run check)",
+      "Bash(npm run typecheck)",
+      "Bash(npm run lint)",
+      "Bash(npm run format:check)",
+      "Bash(npm run test*)"
+    ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "failIfUnavailable": true,
+    "allowUnsandboxedCommands": false,
+    "filesystem": {
+      "denyRead": ["~/"],
+      "allowRead": ["."]
+    },
+    "network": {
+      "allowedDomains": ["registry.npmjs.org", "github.com"]
+    }
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Read|Edit|Write|NotebookEdit|Glob|Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/guard.mjs"]
+          }
+        ]
+      }
+    ]
+  }
+}
