@@ -6,6 +6,7 @@ import { formatearCantidad } from '@/services/cantidad';
 import { ETIQUETA_LUZ, ETIQUETA_TIPO } from '@/services/etiquetas';
 import { formatearFecha } from '@/services/fechas';
 import { AvisoDeSync } from './AvisoDeSync';
+import { descripcionDeEstado, EstadoDeFila } from './EstadoDeFila';
 import { BotonIcono } from './BotonIcono';
 import { Icono, type NombreIcono } from './Icono';
 import { Insignia } from './Insignia';
@@ -44,7 +45,10 @@ interface CuerpoProps {
 function CuerpoDeLabor({ labor, resumen, nombreDeLote, alEditar }: CuerpoProps) {
   const cantidad =
     labor.cantidad > 0 ? `${formatearCantidad(labor.cantidad)} ${labor.unidad ?? ''}`.trim() : null;
-  const aviso = labor.sync_error === null ? '' : `. Sin sincronizar: ${labor.sync_error}`;
+  const aviso =
+    labor.sync_error === null
+      ? descripcionDeEstado(labor.pending, null)
+      : `. Sin sincronizar: ${labor.sync_error}`;
   return (
     <Pressable
       accessibilityRole="button"
@@ -64,6 +68,7 @@ function CuerpoDeLabor({ labor, resumen, nombreDeLote, alEditar }: CuerpoProps) 
       {nombreDeLote ? <Texto variante="ayuda">Lote: {nombreDeLote}</Texto> : null}
       {labor.nota ? <Texto>{labor.nota}</Texto> : null}
       {labor.luz ? <Insignia>{ETIQUETA_LUZ[labor.luz]}</Insignia> : null}
+      <EstadoDeFila pending={labor.pending} syncError={labor.sync_error} />
       <AvisoDeSync mensaje={labor.sync_error} />
     </Pressable>
   );

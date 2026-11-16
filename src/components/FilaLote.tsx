@@ -2,6 +2,7 @@ import { Pressable, View } from 'react-native';
 import { textoDias } from '@/services/etiquetas';
 import type { LoteConDias } from '@/services/loteService';
 import { AvisoDeSync } from './AvisoDeSync';
+import { descripcionDeEstado, EstadoDeFila } from './EstadoDeFila';
 import { Insignia } from './Insignia';
 import { Texto } from './Texto';
 
@@ -15,7 +16,10 @@ export function FilaLote({ lote, alAbrir }: FilaLoteProps) {
   const dias = textoDias(lote.dias_desde_siembra);
   const altitud = lote.altitud_m === null ? '' : ` · ${lote.altitud_m} m de altitud`;
   const finca = lote.finca === null ? '' : `${lote.finca} · `;
-  const aviso = lote.sync_error === null ? '' : `. Sin sincronizar: ${lote.sync_error}`;
+  const aviso =
+    lote.sync_error === null
+      ? descripcionDeEstado(lote.pending, null)
+      : `. Sin sincronizar: ${lote.sync_error}`;
   return (
     <Pressable
       accessibilityRole="button"
@@ -33,6 +37,7 @@ export function FilaLote({ lote, alAbrir }: FilaLoteProps) {
         {finca}
         {lote.cultivo} · {lote.area_m2} m²{altitud}
       </Texto>
+      <EstadoDeFila pending={lote.pending} syncError={lote.sync_error} />
       <AvisoDeSync mensaje={lote.sync_error} />
     </Pressable>
   );

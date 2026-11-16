@@ -42,7 +42,7 @@ describe('avisos en las filas', () => {
   });
 
   it('un lote sin aviso queda exactamente como antes', async () => {
-    await render(<FilaLote lote={lote()} alAbrir={jest.fn()} />);
+    await render(<FilaLote lote={lote({ pending: 0 })} alAbrir={jest.fn()} />);
 
     expect(screen.queryByText(/Sin sincronizar/)).toBeNull();
     expect(

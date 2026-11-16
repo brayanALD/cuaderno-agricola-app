@@ -1,10 +1,12 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, View } from 'react-native';
+import { AvisoDePendientes } from '@/components/AvisoDePendientes';
 import { Boton } from '@/components/Boton';
 import { CampoTexto } from '@/components/CampoTexto';
 import { FilaLote } from '@/components/FilaLote';
 import { Pantalla } from '@/components/Pantalla';
+import { PanelResumen } from '@/components/PanelResumen';
 import { Vista } from '@/components/Vista';
 import { useLotes } from '@/hooks/useLotes';
 
@@ -18,6 +20,7 @@ export default function PantallaLotes() {
 
   return (
     <Pantalla desplazable={false}>
+      <AvisoDePendientes />
       <CampoTexto etiqueta="Buscar lote o cultivo" valor={texto} onChangeText={setTexto} />
       <View className="flex-1">
         <Vista
@@ -40,6 +43,7 @@ export default function PantallaLotes() {
             <FlatList
               data={datos}
               keyExtractor={(lote) => lote.id}
+              ListHeaderComponent={buscando ? undefined : <PanelResumen />}
               contentContainerClassName="gap-3 pb-4"
               keyboardShouldPersistTaps="handled"
               renderItem={({ item }) => (

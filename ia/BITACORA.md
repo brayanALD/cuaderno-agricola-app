@@ -557,3 +557,10 @@ Validación: `npm run check` en verde en ambos repos (893 pruebas en la app, 185
 Decisión: D96–D98 (app) y D94–D95 (API). El comportamiento por defecto de la especificación (gana la última escritura) se mantiene para quien no envía `base_updated_at`.
 Rechazos/correcciones: un 412 nuevo (se usó el 409 que ya prevé la especificación); un JSON de conflicto ilegible dejaba la fila atascada (ahora se desbloquea); el camino de servidor anterior anotaba lo enviado solo al final del grupo (ahora fila por fila).
 
+## 2026-11-16 · Sesión 19 · Experiencia en la app D1–D4 (D99–D101)
+Propósito: estado de sincronización por fila y aviso global, panel resumen, repetir la última labor y gráfico de producción por mes.
+Evidencia: `EstadoDeFila`, `AvisoDePendientes`, `PanelResumen`, `GraficoProduccion`, `RepetirUltima`, `resumenService`, `resumenRepository`, `ultimaLaborDeTipo`, `usePendientes`; pestañas Lotes y Labores y formulario de labor nueva.
+Validación: `npm run check` en verde (929 pruebas). Sin probar en teléfono: aspecto del panel y de las barras en el Redmi A2 (360 dp) y lectura con TalkBack.
+Decisión: D99–D101. Sin dependencias nuevas ni cambios en la API.
+Rechazos/correcciones: se descartó una tabla de ajustes para «recordar por tipo» (se deriva de las labores); una prueba que simulaba el fin de la sincronización con SQL directo no refleja cómo se recarga la pantalla (solo `invalidar()` sube la versión), así que se quitó.
+

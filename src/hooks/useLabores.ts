@@ -11,10 +11,13 @@ import {
   obtenerLabor,
   proximaLaborDeLote,
   proximasLaboresPorLote,
+  ultimasLaboresPorTipo,
   type ProximaLabor,
+  type UltimasLabores,
 } from '@/services/laborService';
 import type { Sugerencia } from '@/services/proximaLabor';
 import { produccionDeLote, type Produccion } from '@/services/produccionService';
+import { resumenGeneral, type Resumen } from '@/services/resumenService';
 import { listaVacia, useCarga, type Carga } from './useCarga';
 
 /** Sin cosechas y sin costos no hay nada que mostrar. */
@@ -73,4 +76,17 @@ export function useCarencia(loteId: string, excluirId?: string): Carga<Carencia>
 export function useCiclos(loteId: string): Carga<CicloFila[]> {
   const cargar = useCallback((ctx: Contexto) => listarCiclos(ctx, loteId), [loteId]);
   return useCarga(cargar, listaVacia);
+}
+
+/** Resumen de toda la finca (D100); «vacío» si aún no hay lotes. */
+export function useResumen(): Carga<Resumen> {
+  return useCarga(resumenGeneral, sinLotes);
+}
+
+const sinLotes = (resumen: Resumen): boolean => resumen.lotes === 0;
+
+/** La última labor de cada tipo, para ofrecer repetirla al registrar una nueva (D100). */
+export function useUltimasLabores(loteId: string): Carga<UltimasLabores> {
+  const cargar = useCallback((ctx: Contexto) => ultimasLaboresPorTipo(ctx, loteId), [loteId]);
+  return useCarga(cargar);
 }

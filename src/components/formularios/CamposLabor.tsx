@@ -1,6 +1,7 @@
 import { Controller, useWatch, type Control, type UseFormSetValue } from 'react-hook-form';
 import { TIPOS_LABOR, type Luz, type TipoLabor } from '@/db/modelo';
 import { enCarencia, type Carencia } from '@/services/carencia';
+import type { UltimasLabores } from '@/services/laborService';
 import { ETIQUETA_LUZ, ETIQUETA_TIPO, UNIDAD_SUGERIDA } from '@/services/etiquetas';
 import { formatearFecha } from '@/services/fechas';
 import { conProducto, type ValoresLabor } from '@/services/formularios';
@@ -11,6 +12,7 @@ import { ControlCantidad } from '../ControlCantidad';
 import { Selector, type OpcionSelector } from '../Selector';
 import { CampoControlado } from './CampoControlado';
 import { MedidorLuz } from './MedidorLuz';
+import { RepetirUltima } from './RepetirUltima';
 import { SeccionFoto } from './SeccionFoto';
 
 const OPCIONES_TIPO: readonly OpcionSelector<TipoLabor>[] = TIPOS_LABOR.map((tipo) => ({
@@ -29,6 +31,7 @@ interface Props {
   readonly setValue: UseFormSetValue<ValoresLabor>;
   readonly hoy: string;
   readonly carencia?: Carencia | null;
+  readonly ultimas?: UltimasLabores;
 }
 
 /** Al elegir un tipo se sugiere su unidad (las cosechas siempre van en kg). */
@@ -55,13 +58,16 @@ function SelectorDeTipo({ control, setValue }: Pick<Props, 'control' | 'setValue
 }
 
 /** Tipo, fecha, cantidad y unidad. En cosecha la unidad es siempre kg y el paso es de 0,5. */
-function CamposPrincipales({ control, setValue, hoy, carencia = null }: Props) {
+function CamposPrincipales({ control, setValue, hoy, carencia = null, ultimas }: Props) {
   const tipo = useWatch({ control, name: 'tipo' });
   const unidad = useWatch({ control, name: 'unidad' });
   const fecha = useWatch({ control, name: 'fecha' });
   return (
     <>
       <SelectorDeTipo control={control} setValue={setValue} />
+      {ultimas === undefined ? null : (
+        <RepetirUltima control={control} setValue={setValue} ultimas={ultimas} />
+      )}
       <Controller
         control={control}
         name="fecha"
@@ -177,10 +183,16 @@ function CamposOpcionales({
 }
 
 /** Todos los campos de una labor. */
-export function CamposLabor({ control, setValue, hoy, carencia }: Props) {
+export function CamposLabor({ control, setValue, hoy, carencia, ultimas }: Props) {
   return (
     <>
-      <CamposPrincipales control={control} setValue={setValue} hoy={hoy} carencia={carencia} />
+      <CamposPrincipales
+        control={control}
+        setValue={setValue}
+        hoy={hoy}
+        carencia={carencia}
+        ultimas={ultimas}
+      />
       <CamposDeInsumo control={control} />
       <CamposOpcionales control={control} setValue={setValue} />
     </>

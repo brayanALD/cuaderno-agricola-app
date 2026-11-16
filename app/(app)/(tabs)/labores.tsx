@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, View } from 'react-native';
 import { Aviso } from '@/components/Aviso';
+import { AvisoDePendientes } from '@/components/AvisoDePendientes';
 import { CampoTexto } from '@/components/CampoTexto';
 import { FilaLabor } from '@/components/FilaLabor';
 import { Pantalla } from '@/components/Pantalla';
@@ -29,6 +30,7 @@ function Cabecera({ texto, alCambiarTexto, aviso, alAbrirLote }: CabeceraProps) 
         valor={texto}
         onChangeText={alCambiarTexto}
       />
+      <AvisoDePendientes />
       <Aviso texto={aviso} />
       {buscando ? null : <ProximasLabores alAbrirLote={alAbrirLote} />}
       <Texto variante="subtitulo">{buscando ? 'Resultados' : 'Labores recientes'}</Texto>

@@ -120,6 +120,16 @@ Lote / Labor ─ ElegirVersion ─ conflictoService.resolverConflicto ─ «mía
 `version_servidor`: `NULL` = aún no existe en el servidor; vacío = existe pero no se conoce su versión (filas anteriores a
 la migración 6: no se compara y gana la última escritura); texto = el `updated_at` que puso el servidor.
 
+## Experiencia en la app (D99–D101)
+
+```text
+FilaLote · FilaLabor ─ EstadoDeFila (icono + texto) ─ descripcionDeEstado (solo «Pendiente de enviar» al lector)
+Lotes · Labores ─ AvisoDePendientes ─ usePendientes ─ contarSync          (cambios sin enviar / con aviso)
+Lotes ─ PanelResumen ─ useResumen ─ resumenService ─ resumenRepository + proximasLaboresPorLote (RF-03)
+Nueva labor ─ RepetirUltima ─ useUltimasLabores ─ ultimasLaboresPorTipo ─ ultimaLaborDeTipo (este lote, si no otro)
+Ficha del lote ─ GraficoProduccion (barras con View) ─ produccionDeLote
+```
+
 ## Sesión y cuentas (D60, D63–D69)
 
 ```text

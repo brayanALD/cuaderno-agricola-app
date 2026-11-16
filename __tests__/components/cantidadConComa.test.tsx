@@ -19,7 +19,9 @@ describe('cantidades con coma decimal (H3)', () => {
 
     expect(screen.getByText('8,25 kg')).toBeTruthy();
     expect(screen.queryByText('8.25 kg')).toBeNull();
-    expect(screen.getByRole('button', { name: /8,25 kg\. Editar$/ })).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: /8,25 kg(\. Pendiente de enviar)?\. Editar$/ }),
+    ).toBeTruthy();
   });
 
   it('una cantidad entera no cambia («7 L»)', async () => {

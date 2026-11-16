@@ -4,7 +4,7 @@ import { Pantalla } from '@/components/Pantalla';
 import { Vista } from '@/components/Vista';
 import { useAcciones } from '@/hooks/useAcciones';
 import { useHoy } from '@/hooks/useHoy';
-import { useCarencia } from '@/hooks/useLabores';
+import { useCarencia, useUltimasLabores } from '@/hooks/useLabores';
 import { useLote } from '@/hooks/useLotes';
 import { valoresLaborVacios } from '@/services/formularios';
 
@@ -16,6 +16,7 @@ export default function NuevaLabor() {
   const { crearLabor } = useAcciones();
   const hoy = useHoy();
   const carencia = useCarencia(loteId);
+  const ultimas = useUltimasLabores(loteId);
   return (
     <Pantalla>
       <Vista
@@ -32,6 +33,7 @@ export default function NuevaLabor() {
             valoresIniciales={valoresLaborVacios(hoy)}
             hoy={hoy}
             carencia={carencia.vista.estado === 'listo' ? carencia.vista.datos : null}
+            ultimas={ultimas.vista.estado === 'listo' ? ultimas.vista.datos : undefined}
             textoBoton="Registrar labor"
             alGuardar={(labor) => crearLabor(datos.id, labor)}
             alTerminar={() => router.back()}

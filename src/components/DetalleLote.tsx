@@ -4,9 +4,10 @@ import { useCarencia, useCiclos, useProduccion, useProximaLabor } from '@/hooks/
 import { useLote } from '@/hooks/useLotes';
 import { formatearCantidad } from '@/services/cantidad';
 import { ETIQUETA_TIPO, textoDias, textoVencimiento } from '@/services/etiquetas';
-import { diasDesdeSiembra, formatearFecha, formatearMes } from '@/services/fechas';
+import { diasDesdeSiembra, formatearFecha } from '@/services/fechas';
 import { AvisoDeCarencia } from './AvisoDeCarencia';
 import { AvisoDeSync } from './AvisoDeSync';
+import { GraficoProduccion } from './GraficoProduccion';
 import { ElegirVersion } from './ElegirVersion';
 import { Insignia } from './Insignia';
 import { Tarjeta } from './Tarjeta';
@@ -71,11 +72,7 @@ function TarjetaProduccion({ id }: { readonly id: string }) {
         {(p) => (
           <View className="gap-1">
             <Texto variante="titulo">Total: {kg(p.totalKg)}</Texto>
-            {p.porMes.map((mes) => (
-              <Texto key={mes.mes} tono="tenue">
-                {formatearMes(mes.mes)}: {kg(mes.kg)}
-              </Texto>
-            ))}
+            <GraficoProduccion meses={p.porMes} />
             {p.costoTotal > 0 ? (
               <Texto>Costo total: {formatearCantidad(p.costoTotal)}</Texto>
             ) : null}

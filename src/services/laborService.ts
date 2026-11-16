@@ -1,4 +1,4 @@
-import type { LaborFila, LoteFila } from '@/db/modelo';
+import { TIPOS_LABOR, type LaborFila, type LoteFila, type TipoLabor } from '@/db/modelo';
 import { encolarBorradoDeFoto } from '@/repositories/fotoRepository';
 import {
   actualizarLabor as actualizarFila,
@@ -7,6 +7,7 @@ import {
   listarLaboresRecientes as listarRecientes,
   marcarLaborBorrada,
   obtenerLabor as obtenerFila,
+  ultimaLaborDeTipo,
 } from '@/repositories/laborRepository';
 import { listarLotes, obtenerLote } from '@/repositories/loteRepository';
 import { carenciaMasLarga, type Carencia } from './carencia';
@@ -140,6 +141,19 @@ export function listarLaboresDeLote(ctx: Contexto, loteId: string): Promise<Labo
 
 export function listarLaboresRecientes(ctx: Contexto, limite = 20): Promise<LaborFila[]> {
   return listarRecientes(ctx.db, limite);
+}
+
+/** Para cada tipo, la última labor que se hizo (D100): la de este lote primero y, si no, la de otro lote. */
+export type UltimasLabores = Readonly<Partial<Record<TipoLabor, LaborFila>>>;
+
+export async function ultimasLaboresPorTipo(
+  ctx: Contexto,
+  loteId: string,
+): Promise<UltimasLabores> {
+  const filas = await Promise.all(
+    TIPOS_LABOR.map(async (tipo) => [tipo, await ultimaLaborDeTipo(ctx.db, tipo, loteId)] as const),
+  );
+  return Object.fromEntries(filas.filter(([, labor]) => labor !== null));
 }
 
 export interface ProximaLabor {

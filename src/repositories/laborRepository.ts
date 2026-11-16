@@ -1,4 +1,4 @@
-import type { LaborFila, LaborRemota } from '@/db/modelo';
+import type { LaborFila, LaborRemota, TipoLabor } from '@/db/modelo';
 import type { Db } from '@/db/tipos';
 import { patronLike } from './like';
 
@@ -98,6 +98,23 @@ export function buscarLabores(db: Db, texto: string): Promise<LaborFila[]> {
      WHERE labor.deleted_at IS NULL
        AND (labor.tipo LIKE ? ESCAPE '\\' OR labor.nota LIKE ? ESCAPE '\\') ${ORDEN}`,
     [patron, patron],
+  );
+}
+
+/**
+ * La última labor viva de ese tipo, de lotes vivos: la de este lote si la hay y, si no, la más reciente de
+ * cualquier lote. Es lo que se ofrece repetir al registrar una labor (D100).
+ */
+export function ultimaLaborDeTipo(
+  db: Db,
+  tipo: TipoLabor,
+  loteId: string,
+): Promise<LaborFila | null> {
+  return db.getFirstAsync<LaborFila>(
+    `SELECT ${COLUMNAS_LABOR} FROM labor ${DE_LOTES_VIVOS}
+     WHERE labor.deleted_at IS NULL AND labor.tipo = ?
+     ORDER BY (labor.lote_id = ?) DESC, labor.fecha DESC, labor.created_at DESC, labor.id LIMIT 1`,
+    [tipo, loteId],
   );
 }
 

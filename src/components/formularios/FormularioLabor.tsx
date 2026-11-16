@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { View } from 'react-native';
 import { crearEsquemaFormularioLabor, type ValoresLabor } from '@/services/formularios';
 import type { Carencia } from '@/services/carencia';
+import type { UltimasLabores } from '@/services/laborService';
 import type { Resultado } from '@/services/resultado';
 import type { DatosLabor } from '@/services/validacion';
 import { Boton } from '../Boton';
@@ -31,6 +32,8 @@ export interface FormularioLaborProps {
   readonly hoy: string;
   /** Periodo de carencia del lote: si la cosecha cae dentro, se avisa (no se impide) (D95). */
   readonly carencia?: Carencia | null;
+  /** Última labor de cada tipo: solo al registrar una nueva, para ofrecer repetirla (D100). */
+  readonly ultimas?: UltimasLabores;
   readonly textoBoton: string;
   readonly alGuardar: (datos: DatosLabor) => Promise<Resultado<unknown>>;
   readonly alTerminar: () => void;
@@ -42,6 +45,7 @@ export function FormularioLabor({
   valoresIniciales,
   hoy,
   carencia = null,
+  ultimas,
   textoBoton,
   alGuardar,
   alTerminar,
@@ -73,7 +77,13 @@ export function FormularioLabor({
 
   return (
     <View className="gap-4">
-      <CamposLabor control={control} setValue={setValue} hoy={hoy} carencia={carencia} />
+      <CamposLabor
+        control={control}
+        setValue={setValue}
+        hoy={hoy}
+        carencia={carencia}
+        ultimas={ultimas}
+      />
       <MensajeError texto={general ?? undefined} />
       <Boton titulo={textoBoton} cargando={isSubmitting} onPress={() => void guardar()} />
     </View>
