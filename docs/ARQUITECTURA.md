@@ -107,6 +107,19 @@ ResumenLote ─ produccionDeLote (desde la siembra vigente): kg por mes · costo
 Sincronización: lotes → ciclos → fotos → labores al subir; lotes → ciclos → labores al bajar. Los campos nuevos
 son opcionales (`null`) para que el APK anterior y la API sigan entendiéndose.
 
+## Resiliencia en campo (D96–D98)
+
+```text
+sincronizar ─ enviarPendientes ─ POST /api/sync (50 por viaje; 404 ⇒ PUT/DELETE sueltos) ─ resultado por cambio
+            │                    └ cada PUT lleva base_updated_at = version_servidor ─ 409 «base_updated_at» ⇒ aviso de conflicto
+            ├ recibirCambios ─ withExclusiveTransactionAsync (otra conexión) ─ aplicar* ─ fila pendiente + otro cambio ⇒ columna conflicto
+            └ copiarFotosRemotas ─ PuertoFotos.descargar (fuera de transacción, 20 por vuelta, solo https) ─ foto_uri
+Lote / Labor ─ ElegirVersion ─ conflictoService.resolverConflicto ─ «mía» (conservarLaMia) · «del otro dispositivo» (guardar…Remoto forzado)
+```
+
+`version_servidor`: `NULL` = aún no existe en el servidor; vacío = existe pero no se conoce su versión (filas anteriores a
+la migración 6: no se compara y gana la última escritura); texto = el `updated_at` que puso el servidor.
+
 ## Sesión y cuentas (D60, D63–D69)
 
 ```text

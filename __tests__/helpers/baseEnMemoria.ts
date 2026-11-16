@@ -8,7 +8,7 @@ const valores = (params: readonly ParametroSql[]): SQLInputValue[] => [...params
 export function crearDbEnMemoria(): Db {
   const sqlite = new DatabaseSync(':memory:');
   sqlite.exec('PRAGMA foreign_keys = ON');
-  return {
+  const db: Db = {
     execAsync: (sql) => {
       sqlite.exec(sql);
       return Promise.resolve();
@@ -31,7 +31,10 @@ export function crearDbEnMemoria(): Db {
         throw error;
       }
     },
+    // Una sola conexión en memoria: la exclusiva se comporta como la normal (se prueba lo que escribe, no el bloqueo).
+    withExclusiveTransactionAsync: (tarea) => db.withTransactionAsync(() => tarea(db)),
   };
+  return db;
 }
 
 export async function crearDbMigrada(): Promise<Db> {

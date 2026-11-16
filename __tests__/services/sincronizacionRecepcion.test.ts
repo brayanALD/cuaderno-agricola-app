@@ -157,7 +157,7 @@ describe('sincronizar: recibir lo del servidor', () => {
 });
 
 describe('sincronizar: conflictos al recibir (gana lo pendiente de este teléfono)', () => {
-  it('un cambio local hecho MIENTRAS se descarga no se pisa y sale en la próxima vuelta', async () => {
+  it('un cambio local hecho MIENTRAS se descarga no se pisa: si el otro teléfono también lo cambió, queda en conflicto', async () => {
     const { ctx, avanzar } = await crearDispositivo();
     const servidor = crearServidorFalso();
     await crearLote(ctx, datosLote());
@@ -171,13 +171,15 @@ describe('sincronizar: conflictos al recibir (gana lo pendiente de este teléfon
     };
 
     await sincronizar(ctx, servidor);
+
+    // No se pisa lo local (D74) y, como el otro teléfono también lo cambió, queda en conflicto (D96).
     expect(await leerLote(ctx.db, 'a-1')).toEqual(
       expect.objectContaining({ nombre: 'Mi cambio local', pending: 1 }),
     );
-
-    avanzar();
-    await sincronizar(ctx, servidor);
-    expect(servidor.lotes.get('a-1')?.nombre).toBe('Mi cambio local');
+    expect(await ctx.db.getFirstAsync('SELECT conflicto IS NOT NULL AS hay FROM lote')).toEqual({
+      hay: 1,
+    });
+    expect(servidor.lotes.get('a-1')?.nombre).toBe('Del otro teléfono');
   });
 
   it('si el lote que llega tiene el nombre de uno local pendiente, ese queda con aviso y el del servidor entra', async () => {

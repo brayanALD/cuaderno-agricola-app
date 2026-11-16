@@ -91,6 +91,22 @@ CREATE TABLE ciclo (
 CREATE INDEX idx_ciclo_lote ON ciclo (lote_id, fecha_fin);
 `;
 
+/**
+ * v6: detección de conflictos entre teléfonos (D96). `version_servidor` es el `updated_at` que el servidor tenía de
+ * la fila la última vez que se supo (`NULL` = aún no existe allá; vacío = ya existía pero no se conoce su versión,
+ * como las filas anteriores a esta versión: no se compara y gana la última escritura, como siempre).
+ * `conflicto` guarda el documento del servidor cuando otro teléfono cambió la fila mientras esta tenía cambios
+ * sin enviar, hasta que el usuario elige.
+ */
+const MIGRACION_6 = `
+ALTER TABLE lote ADD COLUMN version_servidor TEXT;
+ALTER TABLE lote ADD COLUMN conflicto TEXT;
+ALTER TABLE labor ADD COLUMN version_servidor TEXT;
+ALTER TABLE labor ADD COLUMN conflicto TEXT;
+UPDATE lote SET version_servidor = '';
+UPDATE labor SET version_servidor = '';
+`;
+
 /** El índice `i` lleva la base de la versión `i` a la `i + 1`. Nunca se editan las ya publicadas. */
 const MIGRACIONES: readonly string[] = [
   MIGRACION_1,
@@ -98,6 +114,7 @@ const MIGRACIONES: readonly string[] = [
   MIGRACION_3,
   MIGRACION_4,
   MIGRACION_5,
+  MIGRACION_6,
 ];
 
 export const VERSION_ESQUEMA = MIGRACIONES.length;

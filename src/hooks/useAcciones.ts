@@ -2,6 +2,11 @@ import { useMemo } from 'react';
 import type { CicloFila, LaborFila, LoteFila } from '@/db/modelo';
 import { useCuaderno } from '@/context/CuadernoContext';
 import { cerrarCiclo } from '@/services/cicloService';
+import {
+  resolverConflicto,
+  type Eleccion,
+  type EntidadConConflicto,
+} from '@/services/conflictoService';
 import { actualizarLabor, borrarLabor, crearLabor, duplicarLabor } from '@/services/laborService';
 import { actualizarLote, borrarLote, crearLote } from '@/services/loteService';
 import type { Resultado } from '@/services/resultado';
@@ -15,6 +20,7 @@ export interface Acciones {
   duplicarLabor(id: string): Promise<Resultado<LaborFila>>;
   borrarLabor(id: string): Promise<boolean>;
   cerrarCiclo(loteId: string, datos: unknown): Promise<Resultado<CicloFila>>;
+  resolverConflicto(entidad: EntidadConConflicto, id: string, eleccion: Eleccion): Promise<boolean>;
 }
 
 const salioBien = (resultado: Resultado<unknown> | boolean): boolean =>
@@ -43,6 +49,8 @@ export function useAcciones(): Acciones {
       duplicarLabor: (id) => tras(duplicarLabor(ctx, id)),
       borrarLabor: (id) => tras(borrarLabor(ctx, id)),
       cerrarCiclo: (loteId, datos) => tras(cerrarCiclo(ctx, loteId, datos)),
+      resolverConflicto: (entidad, id, eleccion) =>
+        tras(resolverConflicto(ctx, entidad, id, eleccion)),
     };
   }, [ctx, invalidar]);
 }

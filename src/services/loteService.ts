@@ -48,6 +48,8 @@ export async function crearLote(ctx: Contexto, datos: unknown): Promise<Resultad
     deleted_at: null,
     pending: 1,
     sync_error: null,
+    version_servidor: null,
+    conflicto: null,
   };
   await insertarLote(ctx.db, fila);
   return exito(fila);
@@ -68,7 +70,8 @@ export async function actualizarLote(
     ...validado.valor,
     updated_at: ctx.ahora(),
     pending: 1,
-    sync_error: null,
+    // Un conflicto sin resolver conserva su aviso: lo quita elegir una versión, no editar (D96).
+    sync_error: existente.conflicto === null ? null : existente.sync_error,
   };
   await actualizarFila(ctx.db, fila);
   return exito(fila);

@@ -5,6 +5,15 @@ export type Entidad = 'lote' | 'labor' | 'ciclo';
 export const MENSAJE_NOMBRE_REPETIDO =
   'Ya existe otro lote con ese nombre en tu cuenta (quizá lo creaste en otro dispositivo). Cámbiale el nombre para sincronizarlo.';
 
+export const MENSAJE_CONFLICTO =
+  'Se cambió en otro dispositivo mientras tenías cambios sin enviar. Elige qué versión conservar.';
+
+/** Campo con el que la API distingue este 409 del de «nombre de lote repetido» (D96). */
+const CAMPO_CONFLICTO = 'base_updated_at';
+
+export const esConflictoDeVersion = (error: ErrorApi): boolean =>
+  error.status === 409 && error.detalles.some((detalle) => detalle.campo === CAMPO_CONFLICTO);
+
 /** Un 401, un 429 o un 5xx no son culpa de UNA fila: cortan la vuelta entera. */
 const esGeneral = (error: ErrorApi): boolean =>
   error.status === 401 || error.status === 429 || error.status >= 500;
@@ -15,6 +24,7 @@ const esGeneral = (error: ErrorApi): boolean =>
  */
 export function mensajeDeFila(error: unknown, entidad: Entidad): string {
   if (!(error instanceof ErrorApi) || esGeneral(error)) throw error;
+  if (esConflictoDeVersion(error)) return MENSAJE_CONFLICTO;
   if (entidad === 'lote' && error.status === 409) return MENSAJE_NOMBRE_REPETIDO;
   const rechazo = entidad === 'labor' ? 'El servidor la rechazó' : 'El servidor lo rechazó';
   const detalle = error.status === 400 ? error.detalles[0]?.mensaje : undefined;

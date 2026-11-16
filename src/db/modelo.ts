@@ -17,7 +17,14 @@ interface FilaBase {
   readonly sync_error: string | null;
 }
 
-export interface LoteFila extends FilaBase {
+/** Control de versión contra el servidor, solo en lo que se edita desde varios teléfonos (D96). */
+interface Versionada {
+  readonly version_servidor: string | null;
+  /** Documento del servidor (JSON) que choca con los cambios locales, hasta que el usuario elige. */
+  readonly conflicto: string | null;
+}
+
+export interface LoteFila extends FilaBase, Versionada {
   readonly nombre: string;
   readonly cultivo: string;
   /** Finca a la que pertenece, para agrupar lotes (D95); `null` = sin finca. */
@@ -29,7 +36,7 @@ export interface LoteFila extends FilaBase {
   readonly fecha_siembra: string;
 }
 
-export interface LaborFila extends FilaBase {
+export interface LaborFila extends FilaBase, Versionada {
   readonly lote_id: string;
   readonly tipo: TipoLabor;
   readonly fecha: string;
@@ -57,7 +64,13 @@ export interface CicloFila extends FilaBase {
 export type CicloRemoto = Omit<CicloFila, 'pending' | 'sync_error'>;
 
 /** Lo que el servidor devuelve de un lote: la fila sin las marcas locales de sincronización. */
-export type LoteRemoto = Omit<LoteFila, 'pending' | 'sync_error'>;
+export type LoteRemoto = Omit<
+  LoteFila,
+  'pending' | 'sync_error' | 'version_servidor' | 'conflicto'
+>;
 
 /** Y de una labor; la foto local (`foto_uri`) nunca viaja ni se pisa. */
-export type LaborRemota = Omit<LaborFila, 'pending' | 'sync_error' | 'foto_uri'>;
+export type LaborRemota = Omit<
+  LaborFila,
+  'pending' | 'sync_error' | 'foto_uri' | 'version_servidor' | 'conflicto'
+>;

@@ -10,4 +10,9 @@ export interface Db {
   getFirstAsync<T>(sql: string, params?: readonly ParametroSql[]): Promise<T | null>;
   getAllAsync<T>(sql: string, params?: readonly ParametroSql[]): Promise<T[]>;
   withTransactionAsync(tarea: () => Promise<void>): Promise<void>;
+  /**
+   * Transacción en una conexión APARTE (D96): lo que se escriba por esta base mientras dura NO entra en ella, y
+   * si falla solo se deshace lo suyo. La tarea recibe la base de esa conexión y debe usar SOLO esa.
+   */
+  withExclusiveTransactionAsync(tarea: (tx: Db) => Promise<void>): Promise<void>;
 }

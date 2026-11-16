@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { ElegirVersion } from '@/components/ElegirVersion';
 import { FormularioLabor } from '@/components/formularios/FormularioLabor';
 import { Pantalla } from '@/components/Pantalla';
 import { Vista } from '@/components/Vista';
@@ -25,15 +26,20 @@ function EditorDeLabor({ labor }: { readonly labor: LaborFila }) {
       }}
     >
       {(datos) => (
-        <FormularioLabor
-          fechaSiembra={datos.fecha_siembra}
-          valoresIniciales={valoresDesdeLabor(labor)}
-          hoy={hoy}
-          carencia={carencia.vista.estado === 'listo' ? carencia.vista.datos : null}
-          textoBoton="Guardar cambios"
-          alGuardar={(cambios) => actualizarLabor(labor.id, cambios)}
-          alTerminar={() => router.back()}
-        />
+        <>
+          {labor.conflicto === null ? null : <ElegirVersion entidad="labor" id={labor.id} />}
+          <FormularioLabor
+            // Al elegir la versión del otro dispositivo la labor cambia: el formulario se arma de nuevo con ella.
+            key={`${labor.updated_at}:${labor.version_servidor ?? ''}`}
+            fechaSiembra={datos.fecha_siembra}
+            valoresIniciales={valoresDesdeLabor(labor)}
+            hoy={hoy}
+            carencia={carencia.vista.estado === 'listo' ? carencia.vista.datos : null}
+            textoBoton="Guardar cambios"
+            alGuardar={(cambios) => actualizarLabor(labor.id, cambios)}
+            alTerminar={() => router.back()}
+          />
+        </>
       )}
     </Vista>
   );

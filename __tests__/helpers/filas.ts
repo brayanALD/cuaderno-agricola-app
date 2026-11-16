@@ -18,6 +18,8 @@ export function loteFila(cambios: Partial<LoteFila> = {}): LoteFila {
     deleted_at: null,
     pending: 1,
     sync_error: null,
+    version_servidor: null,
+    conflicto: null,
     ...cambios,
   };
 }
@@ -42,6 +44,8 @@ export function laborFila(cambios: Partial<LaborFila> = {}): LaborFila {
     deleted_at: null,
     pending: 1,
     sync_error: null,
+    version_servidor: null,
+    conflicto: null,
     ...cambios,
   };
 }

@@ -69,6 +69,8 @@ describe('sincronizar: cuando no se puede', () => {
     const servidor = crearServidorFalso();
     await crearLote(ctx, datosLote({ nombre: 'A' }));
     await crearLote(ctx, datosLote({ nombre: 'B' }));
+    // Servidor anterior, sin `POST /api/sync`: se envía fila por fila y el corte llega a la mitad.
+    servidor.estado.sinEnvioPorLotes = true;
     servidor.estado.alResponder = (metodo) => {
       if (metodo === 'PUT') servidor.estado.sinRed = true;
     };
@@ -99,6 +101,7 @@ describe('sincronizar: cuando no se puede', () => {
   it('un 403 al enviar un cambio lo deja con aviso (no corta la vuelta)', async () => {
     const { ctx } = await crearDispositivo();
     const servidor = crearServidorFalso();
+    servidor.estado.sinEnvioPorLotes = true;
     const original = servidor.pedir;
     let primera = true;
     await crearLote(ctx, datosLote({ nombre: 'A' }));

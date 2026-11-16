@@ -7,6 +7,7 @@ import { ETIQUETA_TIPO, textoDias, textoVencimiento } from '@/services/etiquetas
 import { diasDesdeSiembra, formatearFecha, formatearMes } from '@/services/fechas';
 import { AvisoDeCarencia } from './AvisoDeCarencia';
 import { AvisoDeSync } from './AvisoDeSync';
+import { ElegirVersion } from './ElegirVersion';
 import { Insignia } from './Insignia';
 import { Tarjeta } from './Tarjeta';
 import { Texto } from './Texto';
@@ -46,6 +47,7 @@ export function FichaLote({ id }: { readonly id: string }) {
             </Texto>
           ) : null}
           <AvisoDeSync mensaje={datos.sync_error} />
+          {datos.conflicto === null ? null : <ElegirVersion entidad="lote" id={datos.id} />}
         </Tarjeta>
       )}
     </Vista>

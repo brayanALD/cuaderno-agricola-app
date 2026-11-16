@@ -25,6 +25,14 @@ export const fotosReal: PuertoFotos = {
     new File(guardada.uri).move(destino);
     return destino.uri;
   },
+  async descargar(url, id) {
+    const carpeta = new Directory(Paths.document, 'fotos');
+    carpeta.create({ idempotent: true, intermediates: true });
+    const destino = new File(carpeta, `${id}.jpg`);
+    if (destino.exists) destino.delete();
+    const archivo = await File.downloadFileAsync(url, destino);
+    return archivo.uri;
+  },
   async leer(uri) {
     return new Uint8Array(await new File(uri).arrayBuffer());
   },

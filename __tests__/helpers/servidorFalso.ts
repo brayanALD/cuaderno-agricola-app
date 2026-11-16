@@ -74,6 +74,8 @@ export function crearServidorFalso() {
     sinRed: false,
     /** Si se pone, TODAS las peticiones responden con este error HTTP. */
     fallarCon: null as number | null,
+    /** Simula un servidor anterior, sin `POST /api/sync` (responde 404 como lo haría Next.js). */
+    sinEnvioPorLotes: false,
     /** Se ejecuta con la respuesta ya calculada y antes de entregarla: simula algo que pasa «mientras tanto». */
     alResponder: null as ((metodo: string, ruta: string) => Promise<void> | void) | null,
   };
@@ -109,11 +111,26 @@ export function crearServidorFalso() {
     if (!sirve) throw invalido('lote_id', 'El lote no existe.');
   }
 
+  /** Control de versión opcional (D96): misma regla que la API. Sin `base_updated_at`, gana la última escritura. */
+  function exigirVersion(
+    previo: DocRemoto | undefined,
+    base: unknown,
+    datos: Record<string, unknown>,
+  ) {
+    if (base === undefined || previo === undefined || previo.updated_at === base) return;
+    if (Object.entries(datos).every(([campo, valor]) => (previo[campo] ?? null) === valor)) return;
+    throw new ErrorApi(409, 'El elemento cambió en otro dispositivo.', [
+      { campo: 'base_updated_at', mensaje: 'El elemento cambió en otro dispositivo.' },
+    ]);
+  }
+
   function guardar(recurso: Recurso, id: string, cuerpo: unknown): DocRemoto {
-    const datos = normalizar(recurso, cuerpo);
+    const { base_updated_at: base, ...resto } = (cuerpo ?? {}) as Record<string, unknown>;
+    const datos = normalizar(recurso, resto);
     if (recurso === 'lotes') exigirNombreLibre(id, datos.nombre);
     else exigirLote(recurso, datos.lote_id);
     const previo = colecciones[recurso].get(id);
+    if (recurso !== 'ciclos') exigirVersion(previo, base, datos);
     const marca = ahora();
     const doc: DocRemoto = {
       ...datos,
@@ -166,6 +183,42 @@ export function crearServidorFalso() {
     return { ok: true };
   }
 
+  function enviarPorViaje(metodo: string, cuerpo: unknown) {
+    if (metodo !== 'POST' || estado.sinEnvioPorLotes) throw new ErrorApi(404, 'No encontrado');
+    return aplicarCambios(cuerpo);
+  }
+
+  /**
+   * `POST /api/sync` (D98): cada cambio con su propio resultado, en orden. Cada uno queda registrado también como
+   * el `PUT`/`DELETE` que equivale, para que las pruebas lean lo que se aplicó sin importar cómo viajó.
+   */
+  function aplicarCambios(cuerpo: unknown) {
+    const { cambios } = cuerpo as {
+      cambios: { recurso: Recurso; id: string; borrado?: boolean; cuerpo?: unknown }[];
+    };
+    if (!Array.isArray(cambios) || cambios.length === 0 || cambios.length > 50) {
+      throw invalido('cambios', 'Entre 1 y 50 cambios por envío.');
+    }
+    const resultados = cambios.map((cambio) => {
+      const base = { recurso: cambio.recurso, id: cambio.id };
+      llamadas.push({
+        metodo: cambio.borrado === true ? 'DELETE' : 'PUT',
+        ruta: `/api/${cambio.recurso}/${cambio.id}`,
+        cuerpo: cambio.cuerpo,
+      });
+      try {
+        if (cambio.borrado === true) borrar(cambio.recurso, cambio.id);
+        const doc =
+          cambio.borrado === true ? undefined : guardar(cambio.recurso, cambio.id, cambio.cuerpo);
+        return { ...base, estado: 200, updated_at: doc?.updated_at };
+      } catch (error) {
+        if (!(error instanceof ErrorApi)) throw error;
+        return { ...base, estado: error.status, error: error.message, detalles: error.detalles };
+      }
+    });
+    return { resultados };
+  }
+
   function responder(
     metodo: string,
     ruta: string,
@@ -174,6 +227,7 @@ export function crearServidorFalso() {
   ): unknown {
     const [camino = '', consulta = ''] = ruta.split('?');
     const [, , recurso, id] = camino.split('/');
+    if (recurso === 'sync') return enviarPorViaje(metodo, cuerpo);
     if (recurso === 'imagenes') {
       return metodo === 'POST' ? subirImagen(binario) : borrarImagen(consulta);
     }

@@ -194,10 +194,17 @@ describe('labores: guardar lo que llega del servidor', () => {
     });
   });
 
-  it('al actualizar conserva la foto local (`foto_uri`) y toma la URL del servidor', async () => {
+  it('al actualizar conserva la copia local de la MISMA foto (`foto_uri`) y toma lo demás del servidor', async () => {
     const db = await crearDbMigrada();
     await insertarLote(db, loteFila({ pending: 0 }));
-    await insertarLabor(db, laborFila({ pending: 0, foto_uri: 'file:///cache/a.jpg' }));
+    await insertarLabor(
+      db,
+      laborFila({
+        pending: 0,
+        foto_uri: 'file:///cache/a.jpg',
+        foto_url: 'https://blob.example/a.jpg',
+      }),
+    );
 
     await guardarLaborRemota(
       db,

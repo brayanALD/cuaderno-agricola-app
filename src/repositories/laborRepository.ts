@@ -21,6 +21,8 @@ const CAMPOS = [
   'producto',
   'carencia_dias',
   'costo',
+  'version_servidor',
+  'conflicto',
 ] as const;
 
 const COLUMNAS = CAMPOS.join(', ');
@@ -147,12 +149,14 @@ export async function sumarCostosDeLote(db: Db, loteId: string, desde = ''): Pro
 
 /**
  * Lo que falta enviar (también las borradas), de la más antigua a la más nueva. Las labores de un lote
- * con aviso esperan: el servidor las rechazaría porque su lote no existe allá.
+ * con aviso esperan: el servidor las rechazaría porque su lote no existe allá, y las que están en conflicto
+ * esperan a que el usuario elija (D96).
  */
 export function listarLaboresPendientes(db: Db): Promise<LaborFila[]> {
   return db.getAllAsync<LaborFila>(
     `SELECT ${COLUMNAS} FROM labor
-     WHERE pending = 1 AND lote_id NOT IN (SELECT id FROM lote WHERE sync_error IS NOT NULL)
+     WHERE pending = 1 AND conflicto IS NULL
+       AND lote_id NOT IN (SELECT id FROM lote WHERE sync_error IS NOT NULL)
        AND NOT (deleted_at IS NULL AND foto_uri IS NOT NULL AND foto_url IS NULL)
      ORDER BY updated_at, id`,
   );
@@ -163,7 +167,11 @@ export async function marcarLaborSincronizada(
   db: Db,
   id: string,
   actualizadoEn: string,
+  version: string | null = null,
 ): Promise<number> {
+  if (version !== null) {
+    await db.runAsync('UPDATE labor SET version_servidor = ? WHERE id = ?', [version, id]);
+  }
   const resultado = await db.runAsync(
     'UPDATE labor SET pending = 0, sync_error = NULL WHERE id = ? AND updated_at = ?',
     [id, actualizadoEn],
@@ -185,21 +193,34 @@ export async function marcarLaborConError(
 }
 
 /**
- * Guarda una labor que llegó del servidor, ya sincronizada. Conserva la foto local (`foto_uri`) y NO
- * pisa un cambio local pendiente: devuelve 0 si lo omitió.
+ * Guarda una labor que llegó del servidor, ya sincronizada y con su versión. NO pisa un cambio local pendiente:
+ * devuelve 0 si lo omitió (`forzar` lo quita: «tomar la del servidor» al resolver un conflicto, D96).
+ * La copia local de la foto (`foto_uri`) se conserva solo si la foto sigue siendo la misma: si cambió o la labor
+ * se borró, esa copia ya no corresponde (D97).
  */
-export async function guardarLaborRemota(db: Db, labor: LaborRemota): Promise<number> {
+export async function guardarLaborRemota(
+  db: Db,
+  labor: LaborRemota,
+  forzar = false,
+): Promise<number> {
+  const guardia = forzar ? '' : 'WHERE labor.pending = 0';
+  const conservaFoto = forzar
+    ? 'NULL'
+    : 'CASE WHEN excluded.deleted_at IS NULL AND labor.foto_url IS excluded.foto_url THEN labor.foto_uri ELSE NULL END';
   const resultado = await db.runAsync(
     `INSERT INTO labor (id, lote_id, tipo, fecha, cantidad, unidad, nota, foto_url, luz,
-       created_at, updated_at, deleted_at, pending, sync_error, producto, carencia_dias, costo)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL, ?, ?, ?)
+       created_at, updated_at, deleted_at, pending, sync_error, producto, carencia_dias, costo,
+       version_servidor, conflicto)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL, ?, ?, ?, ?, NULL)
      ON CONFLICT(id) DO UPDATE SET lote_id = excluded.lote_id, tipo = excluded.tipo,
        fecha = excluded.fecha, cantidad = excluded.cantidad, unidad = excluded.unidad,
-       nota = excluded.nota, foto_url = excluded.foto_url, luz = excluded.luz,
+       nota = excluded.nota, luz = excluded.luz, foto_uri = ${conservaFoto},
+       foto_url = excluded.foto_url,
        producto = excluded.producto, carencia_dias = excluded.carencia_dias, costo = excluded.costo,
        created_at = excluded.created_at, updated_at = excluded.updated_at,
-       deleted_at = excluded.deleted_at, pending = 0, sync_error = NULL
-     WHERE labor.pending = 0`,
+       deleted_at = excluded.deleted_at, pending = 0, sync_error = NULL,
+       version_servidor = excluded.version_servidor, conflicto = NULL
+     ${guardia}`,
     [
       labor.id,
       labor.lote_id,
@@ -216,6 +237,7 @@ export async function guardarLaborRemota(db: Db, labor: LaborRemota): Promise<nu
       labor.producto,
       labor.carencia_dias,
       labor.costo,
+      labor.updated_at,
     ],
   );
   return resultado.changes;
@@ -228,8 +250,8 @@ export async function guardarLaborRemota(db: Db, labor: LaborRemota): Promise<nu
 export function listarLaboresConFotoPorSubir(db: Db): Promise<LaborFila[]> {
   return db.getAllAsync<LaborFila>(
     `SELECT ${COLUMNAS} FROM labor
-     WHERE pending = 1 AND deleted_at IS NULL AND foto_uri IS NOT NULL AND foto_url IS NULL
-       AND lote_id NOT IN (SELECT id FROM lote WHERE sync_error IS NOT NULL)
+     WHERE pending = 1 AND conflicto IS NULL AND deleted_at IS NULL AND foto_uri IS NOT NULL
+       AND foto_url IS NULL AND lote_id NOT IN (SELECT id FROM lote WHERE sync_error IS NOT NULL)
      ORDER BY updated_at, id`,
   );
 }

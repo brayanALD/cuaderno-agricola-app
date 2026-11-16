@@ -10,6 +10,11 @@ export interface PuertoFotos {
   readonly guardar: (uriOriginal: string, id: string) => Promise<string>;
   /** Los bytes de una foto guardada, para subirla. Lanza si el archivo ya no existe. */
   readonly leer: (uri: string) => Promise<Uint8Array<ArrayBuffer>>;
+  /**
+   * Baja una foto de otro teléfono (ya subida al servidor) a una copia local PERMANENTE (D97), para verla sin
+   * conexión. `id` da nombre al archivo. Devuelve la ruta; lanza si no se pudo descargar.
+   */
+  readonly descargar: (url: string, id: string) => Promise<string>;
   /** Borra la copia local; no falla si ya no existe. */
   readonly borrar: (uri: string) => Promise<void>;
 }

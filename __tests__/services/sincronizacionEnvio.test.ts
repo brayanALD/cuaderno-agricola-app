@@ -49,6 +49,7 @@ describe('sincronizar: enviar lo pendiente', () => {
     expect(Object.keys(lote?.cuerpo as object).sort()).toEqual([
       'altitud_m',
       'area_m2',
+      'base_updated_at',
       'cultivo',
       'fecha_siembra',
       'finca',
@@ -57,6 +58,7 @@ describe('sincronizar: enviar lo pendiente', () => {
       'nombre',
     ]);
     expect(Object.keys(labor?.cuerpo as object).sort()).toEqual([
+      'base_updated_at',
       'cantidad',
       'carencia_dias',
       'costo',
@@ -150,8 +152,8 @@ describe('sincronizar: enviar lo pendiente', () => {
     const { ctx, avanzar } = await crearDispositivo();
     const servidor = crearServidorFalso();
     await crearLote(ctx, datosLote());
-    servidor.estado.alResponder = async (metodo) => {
-      if (metodo !== 'PUT') return;
+    servidor.estado.alResponder = async (_metodo, ruta) => {
+      if (ruta !== '/api/sync') return;
       avanzar();
       await actualizarLote(ctx, 'a-1', datosLote({ nombre: 'Editado en medio' }));
       servidor.estado.alResponder = null;

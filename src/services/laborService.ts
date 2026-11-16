@@ -62,6 +62,8 @@ export async function crearLabor(
     deleted_at: null,
     pending: 1,
     sync_error: null,
+    version_servidor: null,
+    conflicto: null,
   };
   await insertarLabor(ctx.db, fila);
   return exito(fila);
@@ -90,7 +92,8 @@ export async function actualizarLabor(
     foto_url: cambiaFoto ? null : existente.foto_url,
     updated_at: ctx.ahora(),
     pending: 1,
-    sync_error: null,
+    // Un conflicto sin resolver conserva su aviso: lo quita elegir una versión, no editar (D96).
+    sync_error: existente.conflicto === null ? null : existente.sync_error,
   };
   await actualizarFila(ctx.db, fila);
   if (cambiaFoto) await descartarFoto(ctx, existente);
@@ -113,6 +116,8 @@ export async function duplicarLabor(ctx: Contexto, id: string): Promise<Resultad
     deleted_at: null,
     pending: 1,
     sync_error: null,
+    version_servidor: null,
+    conflicto: null,
   };
   await insertarLabor(ctx.db, copia);
   return exito(copia);

@@ -3,6 +3,9 @@ import { migrar } from './migraciones';
 import { NOMBRE_BASE_ANTIGUA, nombreDeBaseDeUsuario } from './nombreBase';
 import type { Db } from './tipos';
 
+/** Cuánto espera una escritura a que otra termine antes de fallar con «database is locked» (D96). */
+const ESPERA_BLOQUEO_MS = 5000;
+
 /** Adapta `SQLiteDatabase` a la interfaz mínima `Db` (parámetros opcionales y de solo lectura). */
 function comoDb(db: SQLiteDatabase): Db {
   return {
@@ -16,6 +19,11 @@ function comoDb(db: SQLiteDatabase): Db {
     getAllAsync: <T>(sql: string, params: readonly (string | number | null)[] = []) =>
       db.getAllAsync<T>(sql, [...params]),
     withTransactionAsync: (tarea) => db.withTransactionAsync(tarea),
+    withExclusiveTransactionAsync: (tarea) =>
+      db.withExclusiveTransactionAsync(async (txn) => {
+        await txn.execAsync(`PRAGMA busy_timeout = ${String(ESPERA_BLOQUEO_MS)}`);
+        await tarea(comoDb(txn));
+      }),
   };
 }
 
@@ -25,7 +33,9 @@ function comoDb(db: SQLiteDatabase): Db {
  */
 export async function abrirBaseDeDatos(uid: string): Promise<Db> {
   const sqlite = await openDatabaseAsync(nombreDeBaseDeUsuario(uid));
-  await sqlite.execAsync('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
+  await sqlite.execAsync(
+    `PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = ${String(ESPERA_BLOQUEO_MS)};`,
+  );
   const db = comoDb(sqlite);
   await migrar(db);
   return db;

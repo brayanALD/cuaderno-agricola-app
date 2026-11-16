@@ -549,3 +549,11 @@ Evidencia: migración 5, `cicloService`, `carencia`, `reporteService`, `reportes
 Validación: `npm run check` en verde (849 pruebas en la app) y `expo-doctor` 20/20; API 163 pruebas. Compartir PDF/CSV solo se puede probar en un teléfono con una versión nueva del APK. El despliegue del API a producción queda pendiente de autorización.
 Decisión: D95 (app) y D93 (API). Campos opcionales con `null` para clientes antiguos; carencia solo avisa.
 Rechazos/correcciones: `trim()` quitaba el BOM del CSV en una prueba; el nombre de archivo convertía las tildes en guiones.
+
+## 2026-11-16 · Sesión 18 · Resiliencia en campo B1–B4 (D96–D98)
+Propósito: detectar conflictos entre teléfonos, aplicar lo recibido en transacción exclusiva, enviar por lotes y guardar copia local de las fotos de otros teléfonos.
+Evidencia: migración 6, `conflictoRepository`, `sync/conflictos`, `sync/enviar` (lotes), `sync/recibir` (exclusiva), `sync/copiarFotos`, `conflictoService`, `ElegirVersion`; API: `schemas/version`, `cambiosService`, `app/api/sync`.
+Validación: `npm run check` en verde en ambos repos (893 pruebas en la app, 185 en la API). Sin probar en teléfono: el bloqueo de SQLite con la transacción exclusiva (P17) y la descarga real de fotos. Sin desplegar el API.
+Decisión: D96–D98 (app) y D94–D95 (API). El comportamiento por defecto de la especificación (gana la última escritura) se mantiene para quien no envía `base_updated_at`.
+Rechazos/correcciones: un 412 nuevo (se usó el 409 que ya prevé la especificación); un JSON de conflicto ilegible dejaba la fila atascada (ahora se desbloquea); el camino de servidor anterior anotaba lo enviado solo al final del grupo (ahora fila por fila).
+

@@ -3,12 +3,12 @@ import type { Db } from '@/db/tipos';
 import { patronLike } from './like';
 
 const COLUMNAS =
-  'id, nombre, cultivo, area_m2, altitud_m, lat, lng, fecha_siembra, created_at, updated_at, deleted_at, pending, sync_error, finca';
+  'id, nombre, cultivo, area_m2, altitud_m, lat, lng, fecha_siembra, created_at, updated_at, deleted_at, pending, sync_error, finca, version_servidor, conflicto';
 const ORDEN = 'ORDER BY nombre COLLATE NOCASE, id';
 
 export async function insertarLote(db: Db, lote: LoteFila): Promise<void> {
   await db.runAsync(
-    `INSERT INTO lote (${COLUMNAS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO lote (${COLUMNAS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       lote.id,
       lote.nombre,
@@ -24,6 +24,8 @@ export async function insertarLote(db: Db, lote: LoteFila): Promise<void> {
       lote.pending,
       lote.sync_error,
       lote.finca,
+      lote.version_servidor,
+      lote.conflicto,
     ],
   );
 }
@@ -98,22 +100,30 @@ export async function marcarLoteBorrado(db: Db, id: string, ahora: string): Prom
   return resultado.changes;
 }
 
-/** Lo que falta enviar al servidor (también los borrados), del más antiguo al más nuevo. */
+/**
+ * Lo que falta enviar al servidor (también los borrados), del más antiguo al más nuevo. Lo que está en conflicto
+ * espera a que el usuario elija (D96).
+ */
 export function listarLotesPendientes(db: Db): Promise<LoteFila[]> {
   return db.getAllAsync<LoteFila>(
-    `SELECT ${COLUMNAS} FROM lote WHERE pending = 1 ORDER BY updated_at, id`,
+    `SELECT ${COLUMNAS} FROM lote WHERE pending = 1 AND conflicto IS NULL ORDER BY updated_at, id`,
   );
 }
 
 /**
  * Da por enviado el lote SOLO si no cambió mientras se enviaba (`updated_at` igual al enviado): si el
- * usuario lo editó en medio, sigue pendiente y sale en la próxima vuelta.
+ * usuario lo editó en medio, sigue pendiente y sale en la próxima vuelta. `version` es el `updated_at` que puso
+ * el servidor: se guarda SIEMPRE, también si la fila sigue pendiente, para que el próximo envío parta de él (D96).
  */
 export async function marcarLoteSincronizado(
   db: Db,
   id: string,
   actualizadoEn: string,
+  version: string | null = null,
 ): Promise<number> {
+  if (version !== null) {
+    await db.runAsync('UPDATE lote SET version_servidor = ? WHERE id = ?', [version, id]);
+  }
   const resultado = await db.runAsync(
     'UPDATE lote SET pending = 0, sync_error = NULL WHERE id = ? AND updated_at = ?',
     [id, actualizadoEn],
@@ -165,19 +175,21 @@ export function buscarLoteVivoConNombre(
 }
 
 /**
- * Guarda un lote que llegó del servidor, ya sincronizado. NO pisa un cambio local pendiente (la
- * condición del `WHERE`): devuelve 0 si lo omitió, que se enviará en la próxima vuelta.
+ * Guarda un lote que llegó del servidor, ya sincronizado y con su versión. NO pisa un cambio local pendiente
+ * (la condición del `WHERE`): devuelve 0 si lo omitió. `forzar` la quita: es lo que pasa cuando el usuario elige
+ * «tomar la del servidor» al resolver un conflicto (D96).
  */
-export async function guardarLoteRemoto(db: Db, lote: LoteRemoto): Promise<number> {
+export async function guardarLoteRemoto(db: Db, lote: LoteRemoto, forzar = false): Promise<number> {
+  const guardia = forzar ? '' : 'WHERE lote.pending = 0';
   const resultado = await db.runAsync(
-    `INSERT INTO lote (${COLUMNAS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL, ?)
+    `INSERT INTO lote (${COLUMNAS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL, ?, ?, NULL)
      ON CONFLICT(id) DO UPDATE SET nombre = excluded.nombre, cultivo = excluded.cultivo,
        finca = excluded.finca,
        area_m2 = excluded.area_m2, altitud_m = excluded.altitud_m, lat = excluded.lat,
        lng = excluded.lng, fecha_siembra = excluded.fecha_siembra, created_at = excluded.created_at,
        updated_at = excluded.updated_at, deleted_at = excluded.deleted_at, pending = 0,
-       sync_error = NULL
-     WHERE lote.pending = 0`,
+       sync_error = NULL, version_servidor = excluded.version_servidor, conflicto = NULL
+     ${guardia}`,
     [
       lote.id,
       lote.nombre,
@@ -191,6 +203,7 @@ export async function guardarLoteRemoto(db: Db, lote: LoteRemoto): Promise<numbe
       lote.updated_at,
       lote.deleted_at,
       lote.finca,
+      lote.updated_at,
     ],
   );
   return resultado.changes;

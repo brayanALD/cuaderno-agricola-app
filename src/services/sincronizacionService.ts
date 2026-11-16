@@ -1,6 +1,7 @@
 import { ErrorApi, ErrorDeRed } from '@/api/errores';
 import { guardarEstadoSync } from '@/repositories/estadoSyncRepository';
 import type { Contexto } from './contexto';
+import { copiarFotosRemotas } from './sync/copiarFotos';
 import { enviarPendientes } from './sync/enviar';
 import { recibirCambios } from './sync/recibir';
 import { CLAVE_ULTIMA_SYNC, type ClienteSync } from './sync/tipos';
@@ -58,6 +59,7 @@ export async function sincronizar(ctx: Contexto, cliente: ClienteSync): Promise<
   try {
     const enviado = await enviarPendientes(ctx, cliente);
     const recibido = await recibirCambios(ctx, cliente);
+    await copiarFotosRemotas(ctx);
     await guardarEstadoSync(ctx.db, CLAVE_ULTIMA_SYNC, ctx.ahora());
     return {
       ok: true,
