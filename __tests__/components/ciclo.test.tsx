@@ -2,10 +2,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react-nativ
 import { FormularioCiclo } from '@/components/formularios/FormularioCiclo';
 import { exito } from '@/services/resultado';
 
-jest.mock('@react-native-community/datetimepicker', () => ({
-  DateTimePickerAndroid: { open: jest.fn(), dismiss: jest.fn() },
-}));
-
 const HOY = '2026-11-14';
 
 describe('FormularioCiclo (D95, D104)', () => {

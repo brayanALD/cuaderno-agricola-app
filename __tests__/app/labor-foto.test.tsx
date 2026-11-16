@@ -14,9 +14,6 @@ jest.mock('expo-router', () => ({
   useRouter: () => mockRouter,
   useLocalSearchParams: () => mockParams,
 }));
-jest.mock('@react-native-community/datetimepicker', () => ({
-  DateTimePickerAndroid: { open: jest.fn(), dismiss: jest.fn() },
-}));
 jest.mock('expo-image-picker', () => ({ launchImageLibraryAsync: jest.fn() }));
 
 type Contexto = Awaited<ReturnType<typeof crearContextoDePrueba>>;

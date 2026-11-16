@@ -4,9 +4,6 @@ import { fallo, exito } from '@/services/resultado';
 import { valoresDesdeLote, valoresLoteVacios } from '@/services/formularios';
 import { loteFila } from '../helpers/filas';
 
-jest.mock('@react-native-community/datetimepicker', () => ({
-  DateTimePickerAndroid: { open: jest.fn(), dismiss: jest.fn() },
-}));
 jest.mock('expo-location', () => ({
   Accuracy: { High: 4 },
   hasServicesEnabledAsync: jest.fn(),

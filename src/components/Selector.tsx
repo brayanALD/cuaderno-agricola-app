@@ -57,14 +57,14 @@ export function Selector<T extends string>({
               onPress={() => elegir(opcion.valor)}
               className={unir(
                 'min-h-[48px] flex-row items-center justify-center gap-2 rounded-xl border-2 px-4 focus:border-focus',
-                igual && 'flex-1 px-2',
+                igual && 'flex-1 gap-1 px-1',
                 activa
                   ? 'border-primary bg-primary-soft'
                   : 'border-border bg-surface active:bg-surface-muted',
               )}
             >
-              {activa ? <Icono nombre="checkmark" tamano={20} tono="primary" /> : null}
-              <Texto variante="boton">{opcion.etiqueta}</Texto>
+              {activa ? <Icono nombre="checkmark" tamano={igual ? 16 : 20} tono="primary" /> : null}
+              <Texto variante={igual ? 'etiqueta' : 'boton'}>{opcion.etiqueta}</Texto>
             </Pressable>
           );
         })}

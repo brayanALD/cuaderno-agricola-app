@@ -15,9 +15,6 @@ jest.mock('expo-router', () => ({
   useRouter: () => mockRouter,
   useLocalSearchParams: () => mockParams,
 }));
-jest.mock('@react-native-community/datetimepicker', () => ({
-  DateTimePickerAndroid: { open: jest.fn(), dismiss: jest.fn() },
-}));
 jest.mock('expo-location', () => ({
   Accuracy: { High: 4 },
   hasServicesEnabledAsync: jest.fn().mockResolvedValue(true),

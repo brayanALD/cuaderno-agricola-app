@@ -102,3 +102,26 @@ export function formatearFechaHora(instante: string): string {
   const minutos = String(fecha.getMinutes()).padStart(2, '0');
   return `${dia}, ${hora}:${minutos}`;
 }
+
+/** `2026-11` + `n` meses → `2026-12`, `2027-01`… (`n` puede ser negativo). */
+export function sumarMeses(mes: string, n: number): string {
+  const [anio = 0, numero = 1] = mes.split('-').map(Number);
+  const total = anio * 12 + (numero - 1) + n;
+  return `${String(Math.floor(total / 12)).padStart(4, '0')}-${String((total % 12) + 1).padStart(2, '0')}`;
+}
+
+/**
+ * Las semanas de un mes (`AAAA-MM`) para dibujar el calendario: la semana empieza en lunes y los huecos antes del
+ * día 1 y después del último día son `null`. Función pura.
+ */
+export function semanasDelMes(mes: string): (string | null)[][] {
+  const [anio = 0, numero = 1] = mes.split('-').map(Number);
+  const huecos = (new Date(Date.UTC(anio, numero - 1, 1)).getUTCDay() + 6) % 7;
+  const dias = new Date(Date.UTC(anio, numero, 0)).getUTCDate();
+  const celdas: (string | null)[] = [
+    ...Array.from({ length: huecos }, () => null),
+    ...Array.from({ length: dias }, (_, i) => `${mes}-${String(i + 1).padStart(2, '0')}`),
+  ];
+  while (celdas.length % 7 !== 0) celdas.push(null);
+  return Array.from({ length: celdas.length / 7 }, (_, i) => celdas.slice(i * 7, i * 7 + 7));
+}

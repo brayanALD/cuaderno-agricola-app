@@ -591,3 +591,16 @@ Validación: estado `FINISHED`, versionCode 3; APK en `https://expo.dev/artifact
 Decisión: solo se subió `versionCode`; sin otros cambios de código.
 Rechazos/correcciones: el primer intento falló porque `npx eas` no existe como ejecutable local (se usa `npx eas-cli`); se informó como lanzado antes de comprobarlo y se corrigió al ver el registro.
 
+## 2026-11-16 · Sesión 24 · Exportación a Excel con plantilla (D107)
+Propósito: cambiar CSV por .xlsx y dar a PDF y Excel una plantilla basada en el tema claro.
+Evidencia: `services/xlsx.ts`, `reporteXlsx.ts`, `plantillaReporte.ts`, `reporteService`, `PuertoReportes.compartirXlsx`, `reportesReal`, menú «Exportar Excel»; dependencia nueva `fflate` (elegida por Brayan entre tres opciones).
+Validación: pruebas del ZIP, estilos con los colores del tema, hoja con filtro y fila fija, y anti-inyección; archivo real abierto con `openpyxl`. Sin probar en Excel ni compartiendo desde el teléfono.
+Decisión: D107.
+Rechazos/correcciones: se descartaron exceljs (módulos de Node en Hermes) y SheetJS (sin estilos y con avisos).
+
+## 2026-11-16 · Sesión 25 · Calendario y reloj propios (D108)
+Propósito: dejar el calendario y reloj genéricos de Android por unos propios con la identidad visual; el reloj, digital.
+Evidencia: `CalendarioPropio`, `RelojPropio`, `sumarMeses`/`semanasDelMes` en `fechas.ts`; `CampoFecha`, `FechaRapida`, `CampoHora` los usan; se quita `datetimepicker`; «Sistema» ya no se parte en dos líneas (`Selector`).
+Validación: pruebas de componentes y de las funciones puras. Sin probar en el teléfono.
+Decisión: D108.
+

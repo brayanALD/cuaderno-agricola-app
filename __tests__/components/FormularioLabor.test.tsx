@@ -8,14 +8,8 @@ import { crearContextoDePrueba } from '../helpers/contexto';
 import { crearEnvoltorio } from '../helpers/envolver';
 import { laborFila } from '../helpers/filas';
 
-jest.mock('@react-native-community/datetimepicker', () => ({
-  DateTimePickerAndroid: { open: jest.fn(), dismiss: jest.fn() },
-}));
 jest.mock('expo-image-picker', () => ({ launchImageLibraryAsync: jest.fn() }));
 
-const { DateTimePickerAndroid } = jest.requireMock<{ DateTimePickerAndroid: { open: jest.Mock } }>(
-  '@react-native-community/datetimepicker',
-);
 const { launchImageLibraryAsync } = jest.requireMock<{ launchImageLibraryAsync: jest.Mock }>(
   'expo-image-picker',
 );
@@ -26,7 +20,6 @@ const Raiz = ({ children }: { children: ReactNode }) => (
 );
 
 beforeEach(() => {
-  DateTimePickerAndroid.open.mockReset();
   launchImageLibraryAsync.mockReset();
 });
 
@@ -52,10 +45,12 @@ async function montar(cambios: Partial<Parameters<typeof FormularioLabor>[0]> = 
 
 const guardar = () => fireEvent.press(screen.getByRole('button', { name: 'Registrar labor' }));
 
-async function elegirFechaEnCalendario(fecha: Date) {
+async function elegirFechaEnCalendario(nombreDelDia: string, meses = 0) {
   await fireEvent.press(screen.getByRole('radio', { name: 'Otra fecha' }));
-  const [opciones] = DateTimePickerAndroid.open.mock.calls.at(-1) ?? [];
-  opciones.onValueChange({}, fecha);
+  for (let i = 0; i < meses; i++) {
+    await fireEvent.press(screen.getByRole('button', { name: 'Mes anterior' }));
+  }
+  await fireEvent.press(screen.getByRole('button', { name: nombreDelDia }));
 }
 
 describe('FormularioLabor', () => {
@@ -126,32 +121,24 @@ describe('FormularioLabor', () => {
   it('una labor realizada no puede tener fecha futura', async () => {
     const { props } = await montar();
 
-    await elegirFechaEnCalendario(new Date(2026, 10, 20));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Otra fecha' }));
+    const futuro = screen.getByRole('button', { name: '20 de noviembre de 2026' });
+    expect(futuro.props.accessibilityState).toMatchObject({ disabled: true });
+    await fireEvent.press(futuro);
     await guardar();
 
-    expect(
-      await screen.findByText('Una labor realizada no puede tener fecha futura.'),
-    ).toBeTruthy();
-    expect(props.alGuardar).not.toHaveBeenCalled();
+    expect(props.alGuardar).toHaveBeenCalledWith(expect.objectContaining({ fecha: HOY }));
   });
 
   it('la cosecha no puede ser anterior a la siembra', async () => {
     const { props } = await montar();
     await fireEvent.press(screen.getByRole('radio', { name: 'Cosecha' }));
 
-    await elegirFechaEnCalendario(new Date(2026, 7, 1));
+    await elegirFechaEnCalendario('1 de agosto de 2026', 3);
     await guardar();
 
     expect(await screen.findByText('La cosecha no puede ser anterior a la siembra.')).toBeTruthy();
     expect(props.alGuardar).not.toHaveBeenCalled();
-  });
-
-  it('el calendario no deja elegir días futuros', async () => {
-    await montar();
-    await fireEvent.press(screen.getByRole('radio', { name: 'Otra fecha' }));
-
-    const [opciones] = DateTimePickerAndroid.open.mock.calls.at(-1) ?? [];
-    expect(opciones.maximumDate.getDate()).toBe(14);
   });
 
   it('foto: elegir de la galería muestra la vista previa y se guarda; se puede quitar', async () => {
@@ -240,7 +227,7 @@ describe('FormularioLabor', () => {
     await guardar();
 
     await waitFor(() => expect(props.alGuardar).toHaveBeenCalled());
-    expect(DateTimePickerAndroid.open).not.toHaveBeenCalled();
+    expect(screen.queryByText('noviembre de 2026')).toBeNull();
     expect(props.alGuardar).toHaveBeenCalledWith(expect.objectContaining({ fecha: HOY }));
   });
 

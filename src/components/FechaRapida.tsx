@@ -1,12 +1,7 @@
-import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
+import { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import {
-  esFechaValida,
-  fechaDesdeISO,
-  fechaLocalISO,
-  formatearFecha,
-  sumarDias,
-} from '@/services/fechas';
+import { esFechaValida, formatearFecha, sumarDias } from '@/services/fechas';
+import { CalendarioPropio } from './CalendarioPropio';
 import { Icono } from './Icono';
 import { MensajeError } from './MensajeError';
 import { Texto } from './Texto';
@@ -56,22 +51,14 @@ function Opcion({
 }
 
 /**
- * Fecha en un toque (D104, Tesler): «Hoy», «Ayer» u «Otra fecha» (el calendario nativo, D50, que no deja
+ * Fecha en un toque (D104, Tesler): «Hoy», «Ayer» u «Otra fecha» (el calendario propio, D108, que no deja
  * escribir una fecha inexistente). Debajo siempre se lee la fecha completa elegida.
  */
 export function FechaRapida({ etiqueta, valor, onChange, hoy, maxima, error }: FechaRapidaProps) {
   const hayFecha = esFechaValida(valor);
   const ayer = sumarDias(hoy, -1);
 
-  const abrirCalendario = () => {
-    DateTimePickerAndroid.open({
-      value: fechaDesdeISO(hayFecha ? valor : hoy),
-      mode: 'date',
-      maximumDate: maxima === undefined ? undefined : fechaDesdeISO(maxima),
-      // Solo se avisa al ELEGIR una fecha: cerrar el calendario sin elegir no cambia nada (H4).
-      onValueChange: (_evento, elegida) => onChange(fechaLocalISO(elegida)),
-    });
-  };
+  const [abierto, setAbierto] = useState(false);
 
   return (
     <View className="gap-1">
@@ -83,9 +70,22 @@ export function FechaRapida({ etiqueta, valor, onChange, hoy, maxima, error }: F
           titulo="Otra fecha"
           icono="calendar-outline"
           activa={hayFecha && valor !== hoy && valor !== ayer}
-          alPulsar={abrirCalendario}
+          alPulsar={() => setAbierto(true)}
         />
       </View>
+      <CalendarioPropio
+        key={String(abierto)}
+        visible={abierto}
+        titulo={etiqueta}
+        valor={valor}
+        hoy={hoy}
+        maxima={maxima}
+        alElegir={(fecha) => {
+          setAbierto(false);
+          onChange(fecha);
+        }}
+        alCerrar={() => setAbierto(false)}
+      />
       <Texto variante="ayuda">{hayFecha ? formatearFecha(valor) : 'Sin fecha'}</Texto>
       <MensajeError texto={error} />
     </View>

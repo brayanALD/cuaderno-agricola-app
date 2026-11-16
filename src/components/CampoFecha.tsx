@@ -1,7 +1,8 @@
-import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
+import { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { esFechaValida, fechaDesdeISO, fechaLocalISO, formatearFecha } from '@/services/fechas';
+import { esFechaValida, formatearFecha } from '@/services/fechas';
 import { Boton } from './Boton';
+import { CalendarioPropio } from './CalendarioPropio';
 import { Icono } from './Icono';
 import { MensajeError } from './MensajeError';
 import { Texto } from './Texto';
@@ -19,21 +20,12 @@ export interface CampoFechaProps {
   readonly error?: string;
 }
 
-/** Fecha con el calendario nativo de Android (D50): no se puede escribir una fecha inexistente. */
+/** Fecha con el calendario propio de la app (D108): no se puede escribir una fecha inexistente. */
 export function CampoFecha({ etiqueta, valor, onChange, hoy, maxima, error }: CampoFechaProps) {
   const hayFecha = esFechaValida(valor);
   const texto = hayFecha ? formatearFecha(valor) : 'Sin fecha';
 
-  const abrirCalendario = () => {
-    DateTimePickerAndroid.open({
-      value: fechaDesdeISO(hayFecha ? valor : hoy),
-      mode: 'date',
-      maximumDate: maxima === undefined ? undefined : fechaDesdeISO(maxima),
-      // `onChange` está obsoleto en la librería (H4): solo se llama a `onValueChange` cuando se ELIGE una fecha;
-      // cerrar el calendario sin elegir no avisa de nada.
-      onValueChange: (_evento, elegida) => onChange(fechaLocalISO(elegida)),
-    });
-  };
+  const [abierto, setAbierto] = useState(false);
 
   return (
     <View className="gap-1">
@@ -42,7 +34,7 @@ export function CampoFecha({ etiqueta, valor, onChange, hoy, maxima, error }: Ca
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`${etiqueta}: ${texto}. Cambiar`}
-          onPress={abrirCalendario}
+          onPress={() => setAbierto(true)}
           className={unir(
             'min-h-[48px] flex-1 flex-row items-center gap-2 rounded-xl border-2 bg-surface px-4',
             error ? 'border-danger' : 'border-border focus:border-focus',
@@ -58,6 +50,19 @@ export function CampoFecha({ etiqueta, valor, onChange, hoy, maxima, error }: Ca
           onPress={() => onChange(hoy)}
         />
       </View>
+      <CalendarioPropio
+        key={String(abierto)}
+        visible={abierto}
+        titulo={etiqueta}
+        valor={valor}
+        hoy={hoy}
+        maxima={maxima}
+        alElegir={(fecha) => {
+          setAbierto(false);
+          onChange(fecha);
+        }}
+        alCerrar={() => setAbierto(false)}
+      />
       <MensajeError texto={error} />
     </View>
   );

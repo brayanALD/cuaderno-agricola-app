@@ -3,17 +3,7 @@ import { CampoFecha } from '@/components/CampoFecha';
 import { CampoTexto } from '@/components/CampoTexto';
 import { Selector } from '@/components/Selector';
 
-jest.mock('@react-native-community/datetimepicker', () => ({
-  DateTimePickerAndroid: { open: jest.fn(), dismiss: jest.fn() },
-}));
-
-const { DateTimePickerAndroid } = jest.requireMock<{
-  DateTimePickerAndroid: { open: jest.Mock };
-}>('@react-native-community/datetimepicker');
-
-beforeEach(() => {
-  DateTimePickerAndroid.open.mockClear();
-});
+beforeEach(() => {});
 
 describe('CampoTexto', () => {
   it('tiene etiqueta visible, nombre accesible y avisa los cambios', async () => {
@@ -167,7 +157,7 @@ describe('Selector', () => {
 });
 
 describe('CampoFecha', () => {
-  it('muestra la fecha escrita en español y un botón que abre el calendario nativo', async () => {
+  it('muestra la fecha escrita en español y un botón que abre el calendario propio en ese mes', async () => {
     await render(
       <CampoFecha
         etiqueta="Fecha de siembra"
@@ -182,44 +172,39 @@ describe('CampoFecha', () => {
       screen.getByRole('button', { name: 'Fecha de siembra: 16 de agosto de 2026. Cambiar' }),
     );
 
-    expect(DateTimePickerAndroid.open).toHaveBeenCalledTimes(1);
-    const opciones = DateTimePickerAndroid.open.mock.calls[0]?.[0] as {
-      value: Date;
-      mode: string;
-      maximumDate?: Date;
-    };
-    expect([
-      opciones.value.getFullYear(),
-      opciones.value.getMonth(),
-      opciones.value.getDate(),
-    ]).toEqual([2026, 7, 16]);
-    expect(opciones.mode).toBe('date');
+    expect(screen.getByText('agosto de 2026')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: '16 de agosto de 2026' }).props.accessibilityState,
+    ).toMatchObject({ selected: true });
   });
 
-  it('al elegir una fecha en el calendario avisa en formato AAAA-MM-DD', async () => {
+  it('al tocar un día avisa en formato AAAA-MM-DD y cierra el calendario', async () => {
     const alCambiar = jest.fn();
     await render(
       <CampoFecha etiqueta="Fecha" valor="2026-08-16" onChange={alCambiar} hoy="2026-11-14" />,
     );
     await fireEvent.press(screen.getByRole('button', { name: /Cambiar/ }));
 
-    const { onValueChange } = DateTimePickerAndroid.open.mock.calls[0]?.[0] as {
-      onValueChange: (evento: object, fecha: Date) => void;
-    };
-    onValueChange({}, new Date(2026, 9, 1));
+    await fireEvent.press(screen.getByRole('button', { name: '1 de agosto de 2026' }));
 
-    expect(alCambiar).toHaveBeenCalledWith('2026-10-01');
+    expect(alCambiar).toHaveBeenCalledWith('2026-08-01');
+    expect(screen.queryByText('agosto de 2026')).toBeNull();
   });
 
-  it('usa la API vigente del selector (`onValueChange`/`onDismiss`), no `onChange`, que está obsoleta (H4)', async () => {
+  it('se puede cambiar de mes con las flechas', async () => {
+    const alCambiar = jest.fn();
     await render(
-      <CampoFecha etiqueta="Fecha" valor="2026-08-16" onChange={jest.fn()} hoy="2026-11-14" />,
+      <CampoFecha etiqueta="Fecha" valor="2026-08-16" onChange={alCambiar} hoy="2026-11-14" />,
     );
     await fireEvent.press(screen.getByRole('button', { name: /Cambiar/ }));
 
-    const opciones = DateTimePickerAndroid.open.mock.calls[0]?.[0] as Record<string, unknown>;
-    expect(opciones.onChange).toBeUndefined();
-    expect(typeof opciones.onValueChange).toBe('function');
+    await fireEvent.press(screen.getByRole('button', { name: 'Mes anterior' }));
+    expect(screen.getByText('julio de 2026')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Mes siguiente' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Mes siguiente' }));
+    await fireEvent.press(screen.getByRole('button', { name: '30 de septiembre de 2026' }));
+
+    expect(alCambiar).toHaveBeenCalledWith('2026-09-30');
   });
 
   it('si se cierra el calendario sin elegir, no cambia nada', async () => {
@@ -229,12 +214,10 @@ describe('CampoFecha', () => {
     );
     await fireEvent.press(screen.getByRole('button', { name: /Cambiar/ }));
 
-    const opciones = DateTimePickerAndroid.open.mock.calls[0]?.[0] as {
-      onDismiss?: () => void;
-    };
-    opciones.onDismiss?.();
+    await fireEvent.press(screen.getByRole('button', { name: 'Cancelar' }));
 
     expect(alCambiar).not.toHaveBeenCalled();
+    expect(screen.queryByText('agosto de 2026')).toBeNull();
   });
 
   it('el botón «Hoy» pone la fecha de hoy', async () => {
@@ -248,30 +231,36 @@ describe('CampoFecha', () => {
     expect(alCambiar).toHaveBeenCalledWith('2026-11-14');
   });
 
-  it('`maxima` limita el calendario (las labores realizadas no pueden ser futuras)', async () => {
+  it('`maxima` bloquea los días siguientes y el mes siguiente (las labores realizadas no pueden ser futuras)', async () => {
+    const alCambiar = jest.fn();
     await render(
       <CampoFecha
         etiqueta="Fecha"
         valor="2026-11-01"
-        onChange={jest.fn()}
+        onChange={alCambiar}
         hoy="2026-11-14"
         maxima="2026-11-14"
       />,
     );
     await fireEvent.press(screen.getByRole('button', { name: /Cambiar/ }));
 
-    const opciones = DateTimePickerAndroid.open.mock.calls[0]?.[0] as { maximumDate?: Date };
-    expect(opciones.maximumDate?.getDate()).toBe(14);
+    expect(
+      screen.getByRole('button', { name: '15 de noviembre de 2026' }).props.accessibilityState,
+    ).toMatchObject({ disabled: true });
+    await fireEvent.press(screen.getByRole('button', { name: '15 de noviembre de 2026' }));
+    expect(alCambiar).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole('button', { name: 'Mes siguiente' }).props.accessibilityState,
+    ).toMatchObject({ disabled: true });
   });
 
-  it('un valor vacío o inválido se muestra como «Sin fecha» y abre el calendario en hoy', async () => {
+  it('un valor vacío o inválido se muestra como «Sin fecha» y abre el calendario en el mes de hoy', async () => {
     await render(<CampoFecha etiqueta="Fecha" valor="" onChange={jest.fn()} hoy="2026-11-14" />);
 
     expect(screen.getByText('Sin fecha')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: /Cambiar/ }));
 
-    const opciones = DateTimePickerAndroid.open.mock.calls[0]?.[0] as { value: Date };
-    expect(opciones.value.getDate()).toBe(14);
+    expect(screen.getByText('noviembre de 2026')).toBeTruthy();
   });
 
   it('muestra el error', async () => {

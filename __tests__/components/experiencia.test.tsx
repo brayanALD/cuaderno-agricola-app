@@ -17,9 +17,6 @@ import { crearContextoDePrueba, datosLabor, datosLote } from '../helpers/context
 import { crearEnvoltorio } from '../helpers/envolver';
 import { AHORA, laborFila, loteFila } from '../helpers/filas';
 
-jest.mock('@react-native-community/datetimepicker', () => ({
-  DateTimePickerAndroid: { open: jest.fn(), dismiss: jest.fn() },
-}));
 jest.mock('expo-image-picker', () => ({ launchImageLibraryAsync: jest.fn() }));
 
 const Raiz = ({ children }: { children: ReactNode }) => (

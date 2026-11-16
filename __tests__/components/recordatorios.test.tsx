@@ -10,17 +10,8 @@ import { crearNotificacionesEnMemoria } from '../helpers/notificacionesEnMemoria
 import { crearLote } from '@/services/loteService';
 import { activarRecordatorios } from '@/services/recordatoriosService';
 
-jest.mock('@react-native-community/datetimepicker', () => ({
-  DateTimePickerAndroid: { open: jest.fn(), dismiss: jest.fn() },
-}));
 // Renderizar el contexto con SQLite en memoria es lento cuando Jest corre en paralelo.
 jest.setTimeout(20_000);
-
-const { DateTimePickerAndroid } = jest.requireMock<{ DateTimePickerAndroid: { open: jest.Mock } }>(
-  '@react-native-community/datetimepicker',
-);
-
-beforeEach(() => DateTimePickerAndroid.open.mockReset());
 
 async function montarPanel(permiso: EstadoPermiso = 'sin-preguntar') {
   const notificaciones = crearNotificacionesEnMemoria(permiso);
@@ -111,11 +102,11 @@ describe('PanelRecordatorios (RF-06)', () => {
     await act(async () => undefined);
 
     await fireEvent.press(screen.getByRole('button', { name: /Hora del aviso: 07:00/ }));
-    const { onValueChange } = DateTimePickerAndroid.open.mock.calls[0]?.[0] as {
-      onValueChange: (evento: unknown, fecha: Date) => void;
-    };
+    for (let i = 0; i < 11; i++)
+      await fireEvent.press(screen.getByRole('button', { name: 'Subir Horas' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Subir Minutos' }));
     await act(async () => {
-      onValueChange({}, new Date(2026, 10, 14, 18, 5));
+      await fireEvent.press(screen.getByRole('button', { name: 'Aceptar' }));
     });
 
     await waitFor(() => expect(screen.getByText('18:05')).toBeTruthy());
@@ -123,33 +114,42 @@ describe('PanelRecordatorios (RF-06)', () => {
   });
 });
 
-describe('CampoHora', () => {
-  it('abre el reloj de 24 horas con la hora actual del campo', async () => {
+describe('CampoHora (reloj digital propio)', () => {
+  it('abre con la hora actual del campo', async () => {
     await render(<CampoHora etiqueta="Hora" valor="07:30" onChange={jest.fn()} />);
 
     await fireEvent.press(screen.getByRole('button', { name: 'Hora: 07:30. Cambiar' }));
 
-    const opciones = DateTimePickerAndroid.open.mock.calls[0]?.[0] as {
-      mode: string;
-      is24Hour: boolean;
-      value: Date;
-    };
-    expect(opciones.mode).toBe('time');
-    expect(opciones.is24Hour).toBe(true);
-    expect([opciones.value.getHours(), opciones.value.getMinutes()]).toEqual([7, 30]);
+    expect(screen.getByLabelText('Horas: 07')).toBeTruthy();
+    expect(screen.getByLabelText('Minutos: 30')).toBeTruthy();
   });
 
-  it('entrega la hora elegida con dos dígitos', async () => {
+  it('sube y baja con flechas: las horas de 1 en 1, los minutos de 5 en 5, dando la vuelta', async () => {
+    const onChange = jest.fn();
+    await render(<CampoHora etiqueta="Hora" valor="23:55" onChange={onChange} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Hora: 23:55. Cambiar' }));
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Subir Horas' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Subir Minutos' }));
+    expect(screen.getByLabelText('Horas: 00')).toBeTruthy();
+    expect(screen.getByLabelText('Minutos: 00')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Bajar Horas' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Aceptar' }));
+
+    expect(onChange).toHaveBeenCalledWith('23:00');
+  });
+
+  it('cancelar no cambia nada y al volver a abrir parte de la hora del campo', async () => {
     const onChange = jest.fn();
     await render(<CampoHora etiqueta="Hora" valor="07:30" onChange={onChange} />);
     await fireEvent.press(screen.getByRole('button', { name: 'Hora: 07:30. Cambiar' }));
-    const { onValueChange } = DateTimePickerAndroid.open.mock.calls[0]?.[0] as {
-      onValueChange: (evento: unknown, fecha: Date) => void;
-    };
+    await fireEvent.press(screen.getByRole('button', { name: 'Subir Horas' }));
 
-    onValueChange({}, new Date(2026, 10, 14, 6, 5));
+    await fireEvent.press(screen.getByRole('button', { name: 'Cancelar' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Hora: 07:30. Cambiar' }));
 
-    expect(onChange).toHaveBeenCalledWith('06:05');
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('Horas: 07')).toBeTruthy();
   });
 
   it('deshabilitado no abre el reloj', async () => {
@@ -157,7 +157,7 @@ describe('CampoHora', () => {
 
     await fireEvent.press(screen.getByRole('button', { name: 'Hora: 07:30. Cambiar' }));
 
-    expect(DateTimePickerAndroid.open).not.toHaveBeenCalled();
+    expect(screen.queryByLabelText('Horas: 07')).toBeNull();
   });
 });
 

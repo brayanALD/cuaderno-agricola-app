@@ -5,7 +5,9 @@ import {
   fechaLocalISO,
   formatearFecha,
   formatearMes,
+  semanasDelMes,
   sumarDias,
+  sumarMeses,
 } from '@/services/fechas';
 
 describe('fechaDesdeISO', () => {
@@ -109,5 +111,34 @@ describe('fechaLocalISO', () => {
 
   it('rellena mes y día con cero', () => {
     expect(fechaLocalISO(new Date(2026, 0, 5, 8, 0))).toBe('2026-01-05');
+  });
+});
+
+describe('calendario propio (D108)', () => {
+  it('sumarMeses cruza el cambio de año en los dos sentidos', () => {
+    expect(sumarMeses('2026-11', 1)).toBe('2026-12');
+    expect(sumarMeses('2026-12', 1)).toBe('2027-01');
+    expect(sumarMeses('2026-01', -1)).toBe('2025-12');
+    expect(sumarMeses('2026-11', -13)).toBe('2025-10');
+  });
+
+  it('semanasDelMes empieza en lunes y rellena los huecos con null', () => {
+    // 1 de noviembre de 2026 es domingo: seis huecos antes.
+    const semanas = semanasDelMes('2026-11');
+
+    expect(semanas[0]).toEqual([null, null, null, null, null, null, '2026-11-01']);
+    expect(semanas[1]?.[0]).toBe('2026-11-02');
+    expect(semanas.every((semana) => semana.length === 7)).toBe(true);
+    expect(semanas.flat().filter((dia) => dia !== null)).toHaveLength(30);
+    expect(semanas.at(-1)?.at(-1)).toBeNull();
+  });
+
+  it('un mes que empieza en lunes no lleva huecos al principio y febrero bisiesto tiene 29 días', () => {
+    expect(semanasDelMes('2026-06')[0]?.[0]).toBe('2026-06-01');
+    expect(
+      semanasDelMes('2028-02')
+        .flat()
+        .filter((dia) => dia !== null),
+    ).toHaveLength(29);
   });
 });
