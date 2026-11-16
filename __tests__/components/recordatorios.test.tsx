@@ -36,13 +36,13 @@ async function montarPanel(permiso: EstadoPermiso = 'sin-preguntar') {
   return { ctx, notificaciones };
 }
 
-const interruptor = () => screen.getByLabelText('Activar recordatorios de riego');
+const interruptor = () => screen.getByRole('switch', { name: 'Activar recordatorios de riego' });
 
 describe('PanelRecordatorios (RF-06)', () => {
   it('empieza apagado, con la hora por defecto y sin pedir ningún permiso', async () => {
     const { notificaciones } = await montarPanel();
 
-    expect(interruptor().props.value).toBe(false);
+    expect(interruptor().props.accessibilityState.checked).toBe(false);
     expect(screen.getByText('07:00')).toBeTruthy();
     expect(
       screen.getByRole('button', { name: /Hora del aviso: 07:00/ }).props.accessibilityState,
@@ -53,11 +53,11 @@ describe('PanelRecordatorios (RF-06)', () => {
   it('al encenderlo pide el permiso, programa el aviso y habilita la hora', async () => {
     const { notificaciones } = await montarPanel();
 
-    await fireEvent(interruptor(), 'valueChange', true);
+    await fireEvent.press(interruptor());
     await act(async () => undefined);
 
     expect(notificaciones.vecesPedido).toBe(1);
-    expect(interruptor().props.value).toBe(true);
+    expect(interruptor().props.accessibilityState.checked).toBe(true);
     expect(notificaciones.programados).toHaveLength(1);
   });
 
@@ -65,10 +65,10 @@ describe('PanelRecordatorios (RF-06)', () => {
     const { notificaciones } = await montarPanel();
     notificaciones.respuestaAlPedir = 'denegado';
 
-    await fireEvent(interruptor(), 'valueChange', true);
+    await fireEvent.press(interruptor());
     await act(async () => undefined);
 
-    expect(interruptor().props.value).toBe(false);
+    expect(interruptor().props.accessibilityState.checked).toBe(false);
     expect(screen.getByText(/permite las notificaciones de la app/)).toBeTruthy();
   });
 
@@ -76,7 +76,7 @@ describe('PanelRecordatorios (RF-06)', () => {
     const abrir = jest.spyOn(Linking, 'openSettings').mockResolvedValue(undefined);
     await montarPanel('denegado');
 
-    await fireEvent(interruptor(), 'valueChange', true);
+    await fireEvent.press(interruptor());
     await act(async () => undefined);
     await fireEvent.press(screen.getByRole('button', { name: 'Abrir ajustes del teléfono' }));
 
@@ -87,7 +87,7 @@ describe('PanelRecordatorios (RF-06)', () => {
   it('sin problema de permiso no aparece el botón de ajustes', async () => {
     await montarPanel('concedido');
 
-    await fireEvent(interruptor(), 'valueChange', true);
+    await fireEvent.press(interruptor());
     await act(async () => undefined);
 
     expect(screen.queryByRole('button', { name: 'Abrir ajustes del teléfono' })).toBeNull();
@@ -95,19 +95,19 @@ describe('PanelRecordatorios (RF-06)', () => {
 
   it('apagarlo cancela los avisos', async () => {
     const { notificaciones } = await montarPanel('concedido');
-    await fireEvent(interruptor(), 'valueChange', true);
+    await fireEvent.press(interruptor());
     await act(async () => undefined);
 
-    await fireEvent(interruptor(), 'valueChange', false);
+    await fireEvent.press(interruptor());
     await act(async () => undefined);
 
-    expect(interruptor().props.value).toBe(false);
+    expect(interruptor().props.accessibilityState.checked).toBe(false);
     expect(notificaciones.programados).toEqual([]);
   });
 
   it('elegir otra hora la guarda y reprograma', async () => {
     const { notificaciones } = await montarPanel('concedido');
-    await fireEvent(interruptor(), 'valueChange', true);
+    await fireEvent.press(interruptor());
     await act(async () => undefined);
 
     await fireEvent.press(screen.getByRole('button', { name: /Hora del aviso: 07:00/ }));

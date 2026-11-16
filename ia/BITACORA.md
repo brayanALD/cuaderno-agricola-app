@@ -513,6 +513,24 @@ la app abre directamente en «Lotes»** (sesión restaurada sin red). Tras la pr
 Notas: la descarga con `fetch` de Node se cortó (`ECONNRESET`); funcionó `Invoke-WebRequest`. Al iniciar sesión Android ofrece guardar la contraseña en Google (por los `autoComplete`). La cuenta
 de prueba anterior (`prueba.campo@example.com`) ya no existía (la borró Brayan); se creó `apk.prueba@example.com`, que conviene borrar al final.
 
+## 2026-11-16 · Sesión 16 · README y pruebas finales
+
+Propósito: README de los dos repositorios y las pruebas finales de la lista de verificación (cobertura, secretos, permisos, accesibilidad).
+
+Evidencia: `README.md` de la app (capturas en `docs/capturas/`, tomadas del APK en el A2 con datos de ejemplo en una cuenta temporal) y de la API; `app.json` (`blockedPermissions`);
+`PanelRecordatorios` (fila tocable).
+
+Validación:
+- **Cobertura:** app 98,6 % de sentencias y 93,7 % de ramas (807 pruebas); API 97,9 % y 92 % (142 pruebas). Umbral del proyecto: 80 %.
+- **Auditoría de secretos:** `git grep` sobre lo versionado y búsqueda de patrones (clave PEM, `AIza…`, token de Blob, cuenta de servicio, `firebaseConfig`, contraseñas de prueba, IP local) dentro del
+  APK descomprimido (`index.android.bundle`, `classes.dex`, `resources.arsc`, manifiesto): solo aparece la URL pública de la API. Antes se había colado una contraseña de prueba en esta bitácora (ya quitada).
+- **Permisos:** el APK pedía de más (micrófono, superposición de pantalla, reconocimiento de actividad, biometría, push de Google): se añadieron a `blockedPermissions`. **Hay que recompilar para que surta efecto.**
+- **Accesibilidad (revisión con `uiautomator`, sin TalkBack):** en lotes, detalle, bitácora, labores, nueva labor, foto y cuenta **ninguna zona tocable sin nombre**. Hallazgos: el interruptor del recordatorio medía
+  27 dp (arreglado: ahora toda la fila es tocable, 48 dp) y los botones de las pestañas aparecen con 22 dp en el árbol de accesibilidad aunque su área táctil real es mayor (se comprobó tocando bajo ese borde); los
+  demás «pequeños» eran controles recortados por el desplazamiento.
+- `npm run check` de la app verde (86 suites, 807 pruebas).
+**No probado:** TalkBack real (leer y navegar con el lector activado: se dejó como prueba manual), el A35 y el pellizco con dos dedos.
+
 ## Plantilla para próximas entradas
 
 ```text

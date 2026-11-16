@@ -1,4 +1,4 @@
-import { Linking, Switch, View } from 'react-native';
+import { Linking, Pressable, Switch, View } from 'react-native';
 import { useRecordatorios } from '@/hooks/useRecordatorios';
 import { useColores } from '@/theme/EsquemaProvider';
 import { Boton } from './Boton';
@@ -18,16 +18,22 @@ export function PanelRecordatorios() {
         Te avisa a la hora elegida cuando toca regar cada lote: 3 días después del último riego de
         la bitácora. Los avisos se calculan en este teléfono, también sin conexión.
       </Texto>
-      <View className="min-h-[48px] flex-row items-center justify-between gap-4">
+      <Pressable
+        accessibilityRole="switch"
+        accessibilityLabel="Activar recordatorios de riego"
+        accessibilityState={{ checked: config.activo }}
+        onPress={() => void alternar(!config.activo)}
+        className="min-h-[48px] flex-row items-center justify-between gap-4"
+      >
         <Texto className="flex-1">Activar recordatorios</Texto>
-        <Switch
-          value={config.activo}
-          onValueChange={(activar) => void alternar(activar)}
-          accessibilityLabel="Activar recordatorios de riego"
-          trackColor={{ false: colores.border, true: colores.primary }}
-          thumbColor={colores.surface}
-        />
-      </View>
+        <View pointerEvents="none" importantForAccessibility="no-hide-descendants">
+          <Switch
+            value={config.activo}
+            trackColor={{ false: colores.border, true: colores.primary }}
+            thumbColor={colores.surface}
+          />
+        </View>
+      </Pressable>
       <CampoHora
         etiqueta="Hora del aviso"
         valor={config.hora}
