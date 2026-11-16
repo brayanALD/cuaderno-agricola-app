@@ -9,6 +9,7 @@ import {
   obtenerLabor as obtenerFila,
 } from '@/repositories/laborRepository';
 import { listarLotes, obtenerLote } from '@/repositories/loteRepository';
+import { carenciaMasLarga, type Carencia } from './carencia';
 import type { Contexto } from './contexto';
 import { erroresDeZod, exito, fallo, type Resultado } from './resultado';
 import { sugerirProximaLabor, type Sugerencia } from './proximaLabor';
@@ -167,4 +168,14 @@ export async function proximaLaborDeLote(
   if (lote === null) return null;
   const labores = await listarDeLote(ctx.db, loteId);
   return sugerirProximaLabor(lote.fecha_siembra, labores, ctx.hoy());
+}
+
+/** Periodo de carencia que manda en el lote (D95); `excluirId` es la labor que se está editando. */
+export async function carenciaDeLote(
+  ctx: Contexto,
+  loteId: string,
+  excluirId?: string,
+): Promise<Carencia | null> {
+  const labores = await listarDeLote(ctx.db, loteId);
+  return carenciaMasLarga(labores.filter((labor) => labor.id !== excluirId));
 }

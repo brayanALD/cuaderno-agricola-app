@@ -1,10 +1,11 @@
 import { View } from 'react-native';
 import { useHoy } from '@/hooks/useHoy';
-import { useProduccion, useProximaLabor } from '@/hooks/useLabores';
+import { useCarencia, useCiclos, useProduccion, useProximaLabor } from '@/hooks/useLabores';
 import { useLote } from '@/hooks/useLotes';
 import { formatearCantidad } from '@/services/cantidad';
 import { ETIQUETA_TIPO, textoDias, textoVencimiento } from '@/services/etiquetas';
 import { diasDesdeSiembra, formatearFecha, formatearMes } from '@/services/fechas';
+import { AvisoDeCarencia } from './AvisoDeCarencia';
 import { AvisoDeSync } from './AvisoDeSync';
 import { Insignia } from './Insignia';
 import { Tarjeta } from './Tarjeta';
@@ -34,6 +35,7 @@ export function FichaLote({ id }: { readonly id: string }) {
             </Texto>
             <Insignia>{textoDias(diasDesdeSiembra(datos.fecha_siembra, hoy))}</Insignia>
           </View>
+          {datos.finca === null ? null : <Texto>Finca: {datos.finca}</Texto>}
           <Texto>Cultivo: {datos.cultivo}</Texto>
           <Texto>Área: {datos.area_m2} m²</Texto>
           <Texto>Sembrado el {formatearFecha(datos.fecha_siembra)}</Texto>
@@ -50,12 +52,47 @@ export function FichaLote({ id }: { readonly id: string }) {
   );
 }
 
+/** Producción en kg por mes (RF-04) y, si hay costos registrados, costo total y por kg (D95). */
+function TarjetaProduccion({ id }: { readonly id: string }) {
+  const produccion = useProduccion(id);
+  return (
+    <Tarjeta>
+      <Texto variante="subtitulo">Producción</Texto>
+      <Vista
+        carga={produccion}
+        vacio={{
+          titulo: 'Aún no hay cosechas',
+          mensaje: 'Registra una labor de tipo cosecha para ver el total en kg.',
+          icono: 'basket-outline',
+        }}
+      >
+        {(p) => (
+          <View className="gap-1">
+            <Texto variante="titulo">Total: {kg(p.totalKg)}</Texto>
+            {p.porMes.map((mes) => (
+              <Texto key={mes.mes} tono="tenue">
+                {formatearMes(mes.mes)}: {kg(mes.kg)}
+              </Texto>
+            ))}
+            {p.costoTotal > 0 ? (
+              <Texto>Costo total: {formatearCantidad(p.costoTotal)}</Texto>
+            ) : null}
+            {p.costoTotal > 0 && p.costoPorKg !== null ? (
+              <Texto>Costo por kg: {formatearCantidad(p.costoPorKg)}</Texto>
+            ) : null}
+          </View>
+        )}
+      </Vista>
+    </Tarjeta>
+  );
+}
+
 /** Próxima labor sugerida (RF-03) y producción en kg por lote y por mes (RF-04). */
 export function ResumenLote({ id }: { readonly id: string }) {
   const proxima = useProximaLabor(id);
-  const produccion = useProduccion(id);
   return (
     <View className="gap-4">
+      <CarenciaVigente id={id} />
       <Tarjeta>
         <Texto variante="subtitulo">Próxima labor sugerida</Texto>
         <Vista carga={proxima} vacio={{ titulo: 'Sin sugerencia', mensaje: 'El lote no existe.' }}>
@@ -69,28 +106,38 @@ export function ResumenLote({ id }: { readonly id: string }) {
           )}
         </Vista>
       </Tarjeta>
-      <Tarjeta>
-        <Texto variante="subtitulo">Producción</Texto>
-        <Vista
-          carga={produccion}
-          vacio={{
-            titulo: 'Aún no hay cosechas',
-            mensaje: 'Registra una labor de tipo cosecha para ver el total en kg.',
-            icono: 'basket-outline',
-          }}
-        >
-          {(p) => (
-            <View className="gap-1">
-              <Texto variante="titulo">Total: {kg(p.totalKg)}</Texto>
-              {p.porMes.map((mes) => (
-                <Texto key={mes.mes} tono="tenue">
-                  {formatearMes(mes.mes)}: {kg(mes.kg)}
-                </Texto>
-              ))}
-            </View>
-          )}
-        </Vista>
-      </Tarjeta>
+      <TarjetaProduccion id={id} />
+      <CiclosAnteriores id={id} />
     </View>
+  );
+}
+
+/** Aviso mientras dure el periodo de carencia de la última aplicación (D95). Sin carencia vigente no pinta nada. */
+function CarenciaVigente({ id }: { readonly id: string }) {
+  const { vista } = useCarencia(id);
+  const hoy = useHoy();
+  if (vista.estado !== 'listo' || vista.datos.hasta <= hoy) return null;
+  const { hasta, producto } = vista.datos;
+  return (
+    <AvisoDeCarencia
+      texto={`Periodo de carencia${producto === null ? '' : ` de ${producto}`}: no coseches antes del ${formatearFecha(hasta)}.`}
+    />
+  );
+}
+
+/** Ciclos de cultivo ya cerrados de este lote (D95). Sin ciclos cerrados no pinta nada. */
+function CiclosAnteriores({ id }: { readonly id: string }) {
+  const { vista } = useCiclos(id);
+  if (vista.estado !== 'listo') return null;
+  return (
+    <Tarjeta>
+      <Texto variante="subtitulo">Ciclos anteriores</Texto>
+      {vista.datos.map((ciclo) => (
+        <Texto key={ciclo.id} tono="tenue">
+          {ciclo.cultivo}: del {formatearFecha(ciclo.fecha_inicio)} al{' '}
+          {formatearFecha(ciclo.fecha_fin)} · {kg(ciclo.total_kg)}
+        </Texto>
+      ))}
+    </Tarjeta>
   );
 }

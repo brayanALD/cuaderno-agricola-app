@@ -14,11 +14,12 @@ interface FilaLoteProps {
 export function FilaLote({ lote, alAbrir }: FilaLoteProps) {
   const dias = textoDias(lote.dias_desde_siembra);
   const altitud = lote.altitud_m === null ? '' : ` · ${lote.altitud_m} m de altitud`;
+  const finca = lote.finca === null ? '' : `${lote.finca} · `;
   const aviso = lote.sync_error === null ? '' : `. Sin sincronizar: ${lote.sync_error}`;
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Lote ${lote.nombre}, ${lote.cultivo}, ${dias}${aviso}. Abrir`}
+      accessibilityLabel={`Lote ${lote.nombre}, ${finca === '' ? '' : `finca ${lote.finca ?? ''}, `}${lote.cultivo}, ${dias}${aviso}. Abrir`}
       onPress={() => alAbrir(lote.id)}
       className="min-h-[48px] gap-1 rounded-2xl border-2 border-border bg-surface p-4 active:bg-surface-muted focus:border-focus"
     >
@@ -29,6 +30,7 @@ export function FilaLote({ lote, alAbrir }: FilaLoteProps) {
         <Insignia>{dias}</Insignia>
       </View>
       <Texto tono="tenue">
+        {finca}
         {lote.cultivo} · {lote.area_m2} m²{altitud}
       </Texto>
       <AvisoDeSync mensaje={lote.sync_error} />

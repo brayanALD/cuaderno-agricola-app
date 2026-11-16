@@ -95,6 +95,18 @@ notificacionesReal: expo-notifications · canal «riego» · cancelAll + schedul
 - Las reprogramaciones van en fila (no se pisan) y reemplazan TODO: es idempotente. Sin permiso concedido solo cancelan; nunca lo piden.
 - Sin conexión funciona igual: el plan sale de la base local. Un solo aviso por lote; si se ignora no se repite hasta la próxima reprogramación.
 
+## Cuaderno agrícola: ciclos, carencia, costos y reportes (D95)
+
+```text
+Lote ─ CabeceraDeLote ─ «Cerrar ciclo» ─ FormularioCiclo ─ cicloService.cerrarCiclo ─ tabla ciclo (+ lote nuevo ciclo)
+Labor ─ CamposLabor ─ producto · carencia_dias · costo ─ carencia.ts (función pura) ─ AvisoDeCarencia (no bloquea)
+ResumenLote ─ produccionDeLote (desde la siembra vigente): kg por mes · costo total · costo por kg
+«Exportar PDF/CSV» ─ useReporte ─ reporteService (HTML escapado / CSV sin fórmulas) ─ PuertoReportes ─ expo-print · expo-sharing
+```
+
+Sincronización: lotes → ciclos → fotos → labores al subir; lotes → ciclos → labores al bajar. Los campos nuevos
+son opcionales (`null`) para que el APK anterior y la API sigan entendiéndose.
+
 ## Sesión y cuentas (D60, D63–D69)
 
 ```text

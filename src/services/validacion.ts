@@ -14,10 +14,36 @@ const texto = (max: number) =>
     .min(1, { error: OBLIGATORIO })
     .max(max, { error: `Máximo ${max} caracteres.` });
 
+/**
+ * Campos añadidos después (D95): ausente, `null` o vacío valen `null`. Así también se acepta lo que llega de un
+ * servidor o de un teléfono que aún no los conoce.
+ */
+const textoOpcional = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max, { error: `Máximo ${max} caracteres.` })
+    .nullish()
+    .transform((valor) => (valor === undefined || valor === null || valor === '' ? null : valor));
+const numeroOpcional = (esquema: z.ZodNumber) =>
+  esquema.nullish().transform((valor) => valor ?? null);
+
+export const camposExtraDeLabor = {
+  producto: textoOpcional(60),
+  carencia_dias: numeroOpcional(
+    numero()
+      .int({ error: 'Los días de carencia deben ser un número entero.' })
+      .min(0, { error: 'Los días de carencia no pueden ser negativos.' })
+      .max(365, { error: 'Máximo 365 días de carencia.' }),
+  ),
+  costo: numeroOpcional(numero().min(0, { error: 'El costo no puede ser negativo.' })),
+};
+
 /** Sección 7 de la especificación. El nombre único por usuario se comprueba en el servicio. */
 export const loteSchema = z.object({
   nombre: texto(60),
   cultivo: texto(60),
+  finca: textoOpcional(60),
   area_m2: numero()
     .int({ error: 'El área debe ser un número entero de m².' })
     .positive({ error: 'El área debe ser mayor que 0.' }),
@@ -55,6 +81,7 @@ export function crearLaborSchema({ fechaSiembra, hoy }: ContextoLabor) {
       luz: z.enum(LUCES, { error: 'Elige soleado o nublado.' }).nullable(),
       /** Foto elegida de la galería; ausente = no tocar la que ya tiene, `null` = quitarla. */
       foto_uri: z.string().max(2000).nullable().optional(),
+      ...camposExtraDeLabor,
     })
     .check((ctx) => {
       const labor = ctx.value;

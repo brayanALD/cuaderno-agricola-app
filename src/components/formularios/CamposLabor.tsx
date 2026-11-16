@@ -1,8 +1,11 @@
 import { Controller, useWatch, type Control, type UseFormSetValue } from 'react-hook-form';
 import { TIPOS_LABOR, type Luz, type TipoLabor } from '@/db/modelo';
+import { enCarencia, type Carencia } from '@/services/carencia';
 import { ETIQUETA_LUZ, ETIQUETA_TIPO, UNIDAD_SUGERIDA } from '@/services/etiquetas';
-import type { ValoresLabor } from '@/services/formularios';
+import { formatearFecha } from '@/services/fechas';
+import { conProducto, type ValoresLabor } from '@/services/formularios';
 import type { DatosLabor } from '@/services/validacion';
+import { AvisoDeCarencia } from '../AvisoDeCarencia';
 import { CampoFecha } from '../CampoFecha';
 import { ControlCantidad } from '../ControlCantidad';
 import { Selector, type OpcionSelector } from '../Selector';
@@ -25,10 +28,11 @@ interface Props {
   readonly control: ControlLabor;
   readonly setValue: UseFormSetValue<ValoresLabor>;
   readonly hoy: string;
+  readonly carencia?: Carencia | null;
 }
 
 /** Al elegir un tipo se sugiere su unidad (las cosechas siempre van en kg). */
-function SelectorDeTipo({ control, setValue }: Omit<Props, 'hoy'>) {
+function SelectorDeTipo({ control, setValue }: Pick<Props, 'control' | 'setValue'>) {
   return (
     <Controller
       control={control}
@@ -51,9 +55,10 @@ function SelectorDeTipo({ control, setValue }: Omit<Props, 'hoy'>) {
 }
 
 /** Tipo, fecha, cantidad y unidad. En cosecha la unidad es siempre kg y el paso es de 0,5. */
-function CamposPrincipales({ control, setValue, hoy }: Props) {
+function CamposPrincipales({ control, setValue, hoy, carencia = null }: Props) {
   const tipo = useWatch({ control, name: 'tipo' });
   const unidad = useWatch({ control, name: 'unidad' });
+  const fecha = useWatch({ control, name: 'fecha' });
   return (
     <>
       <SelectorDeTipo control={control} setValue={setValue} />
@@ -85,9 +90,47 @@ function CamposPrincipales({ control, setValue, hoy }: Props) {
           />
         )}
       />
+      {tipo === 'cosecha' && carencia !== null && enCarencia(fecha, carencia) ? (
+        <AvisoDeCarencia
+          texto={`Esta fecha está dentro del periodo de carencia${carencia.producto === null ? '' : ` de ${carencia.producto}`}: la cosecha es segura desde el ${formatearFecha(carencia.hasta)}.`}
+        />
+      ) : null}
       {tipo === 'cosecha' ? null : (
         <CampoControlado control={control} name="unidad" etiqueta="Unidad" />
       )}
+    </>
+  );
+}
+
+/** Producto aplicado (fumigación y abono), días de carencia (fumigación) y costo de la labor (D95). */
+function CamposDeInsumo({ control }: { readonly control: ControlLabor }) {
+  const tipo = useWatch({ control, name: 'tipo' });
+  return (
+    <>
+      {conProducto(tipo) ? (
+        <CampoControlado
+          control={control}
+          name="producto"
+          etiqueta="Producto aplicado (opcional)"
+          maxLength={60}
+        />
+      ) : null}
+      {tipo === 'fumigacion' ? (
+        <CampoControlado
+          control={control}
+          name="carencia_dias"
+          etiqueta="Días de carencia (opcional)"
+          teclado="numeric"
+          ayuda="Días que hay que esperar después de aplicar antes de cosechar."
+        />
+      ) : null}
+      <CampoControlado
+        control={control}
+        name="costo"
+        etiqueta="Costo (opcional)"
+        teclado="numeric"
+        ayuda="Lo que costó esta labor; suma al costo del lote y al costo por kg."
+      />
     </>
   );
 }
@@ -134,10 +177,11 @@ function CamposOpcionales({
 }
 
 /** Todos los campos de una labor. */
-export function CamposLabor({ control, setValue, hoy }: Props) {
+export function CamposLabor({ control, setValue, hoy, carencia }: Props) {
   return (
     <>
-      <CamposPrincipales control={control} setValue={setValue} hoy={hoy} />
+      <CamposPrincipales control={control} setValue={setValue} hoy={hoy} carencia={carencia} />
+      <CamposDeInsumo control={control} />
       <CamposOpcionales control={control} setValue={setValue} />
     </>
   );

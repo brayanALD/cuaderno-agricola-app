@@ -20,6 +20,8 @@ interface FilaBase {
 export interface LoteFila extends FilaBase {
   readonly nombre: string;
   readonly cultivo: string;
+  /** Finca a la que pertenece, para agrupar lotes (D95); `null` = sin finca. */
+  readonly finca: string | null;
   readonly area_m2: number;
   readonly altitud_m: number | null;
   readonly lat: number | null;
@@ -37,7 +39,22 @@ export interface LaborFila extends FilaBase {
   readonly foto_uri: string | null;
   readonly foto_url: string | null;
   readonly luz: Luz | null;
+  /** Producto aplicado (fumigación o abono), días de carencia antes de cosechar y costo de la labor (D95). */
+  readonly producto: string | null;
+  readonly carencia_dias: number | null;
+  readonly costo: number | null;
 }
+
+/** Un ciclo de cultivo ya cerrado de un lote (D95). */
+export interface CicloFila extends FilaBase {
+  readonly lote_id: string;
+  readonly cultivo: string;
+  readonly fecha_inicio: string;
+  readonly fecha_fin: string;
+  readonly total_kg: number;
+}
+
+export type CicloRemoto = Omit<CicloFila, 'pending' | 'sync_error'>;
 
 /** Lo que el servidor devuelve de un lote: la fila sin las marcas locales de sincronización. */
 export type LoteRemoto = Omit<LoteFila, 'pending' | 'sync_error'>;

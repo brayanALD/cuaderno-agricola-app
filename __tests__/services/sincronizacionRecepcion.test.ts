@@ -62,6 +62,7 @@ describe('sincronizar: recibir lo del servidor', () => {
 
     expect(servidor.llamadasA('GET').map((l) => l.ruta)).toEqual([
       `/api/lotes?since=${encodeURIComponent(cursor ?? '')}`,
+      expect.stringContaining('/api/ciclos?since='),
       expect.stringContaining('/api/labores?since='),
     ]);
   });
@@ -72,7 +73,11 @@ describe('sincronizar: recibir lo del servidor', () => {
 
     await sincronizar(ctx, servidor);
 
-    expect(servidor.llamadasA('GET').map((l) => l.ruta)).toEqual(['/api/lotes', '/api/labores']);
+    expect(servidor.llamadasA('GET').map((l) => l.ruta)).toEqual([
+      '/api/lotes',
+      '/api/ciclos',
+      '/api/labores',
+    ]);
   });
 
   it('pide otra página mientras la anterior llegue llena (500), desde el último `updated_at` (inclusivo)', async () => {

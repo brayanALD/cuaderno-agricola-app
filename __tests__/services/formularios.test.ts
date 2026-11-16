@@ -13,6 +13,7 @@ import { laborFila, loteFila } from '../helpers/filas';
 const escrito = {
   nombre: 'El Mirador',
   cultivo: 'Café',
+  finca: '',
   area_m2: '5000',
   altitud_m: '1650,5',
   lat: '4,65',
@@ -30,6 +31,7 @@ describe('aDatosLote', () => {
       lat: 4.65,
       lng: -75.57,
       fecha_siembra: '2026-08-16',
+      finca: '',
     });
   });
 
@@ -50,6 +52,7 @@ describe('valoresLoteVacios y valoresDesdeLote', () => {
     expect(valoresLoteVacios('2026-11-14')).toEqual({
       nombre: '',
       cultivo: '',
+      finca: '',
       area_m2: '',
       altitud_m: '',
       lat: '',
@@ -64,6 +67,7 @@ describe('valoresLoteVacios y valoresDesdeLote', () => {
     ).toEqual({
       nombre: 'El Mirador',
       cultivo: 'Café',
+      finca: '',
       area_m2: '7000',
       altitud_m: '',
       lat: '',
@@ -119,6 +123,9 @@ describe('formulario de labor', () => {
     nota: 'Goteo',
     luz: 'soleado',
     foto_uri: null,
+    producto: '',
+    carencia_dias: '',
+    costo: '',
   } as const;
 
   it('una labor nueva empieza en riego, de hoy, con la unidad sugerida y sin luz ni foto', () => {
@@ -130,6 +137,9 @@ describe('formulario de labor', () => {
       nota: '',
       luz: null,
       foto_uri: null,
+      producto: '',
+      carencia_dias: '',
+      costo: '',
     });
   });
 
@@ -159,6 +169,9 @@ describe('formulario de labor', () => {
       cantidad: 12.5,
       unidad: 'kg',
       nota: '',
+      producto: '',
+      carencia_dias: '',
+      costo: '',
       luz: 'nublado',
       foto_uri: 'file:///f.jpg',
     });
@@ -186,5 +199,64 @@ describe('formulario de labor', () => {
     expect(resultado.success ? null : resultado.error.issues[0]?.message).toBe(
       'La cantidad no puede ser negativa.',
     );
+  });
+});
+
+describe('campos de cuaderno agrícola en los formularios (D95)', () => {
+  const base = {
+    tipo: 'fumigacion',
+    fecha: '2026-11-10',
+    cantidad: 8,
+    unidad: 'L',
+    nota: '',
+    luz: null,
+    foto_uri: null,
+    producto: ' Mancozeb ',
+    carencia_dias: '21',
+    costo: '35000,5',
+  } as const;
+
+  it('la finca escrita viaja tal cual y se muestra la guardada', () => {
+    expect(aDatosLote({ ...escrito, finca: 'La Aurora' }).finca).toBe('La Aurora');
+    expect(valoresDesdeLote(loteFila({ finca: 'La Aurora' })).finca).toBe('La Aurora');
+  });
+
+  it('una fumigación lleva producto, días de carencia y costo (coma decimal)', () => {
+    expect(aDatosLabor(base)).toMatchObject({
+      producto: ' Mancozeb ',
+      carencia_dias: 21,
+      costo: 35000.5,
+    });
+  });
+
+  it('vacíos son null', () => {
+    expect(aDatosLabor({ ...base, carencia_dias: '', costo: ' ' })).toMatchObject({
+      carencia_dias: null,
+      costo: null,
+    });
+  });
+
+  it('el abono conserva el producto pero no la carencia; el riego, ninguno de los dos', () => {
+    expect(aDatosLabor({ ...base, tipo: 'abono' })).toMatchObject({
+      producto: ' Mancozeb ',
+      carencia_dias: null,
+    });
+    expect(aDatosLabor({ ...base, tipo: 'riego' })).toMatchObject({
+      producto: null,
+      carencia_dias: null,
+      costo: 35000.5,
+    });
+  });
+
+  it('una labor guardada muestra sus datos como texto', () => {
+    const valores = valoresDesdeLabor(
+      laborFila({ tipo: 'fumigacion', producto: 'Mancozeb', carencia_dias: 21, costo: 35000 }),
+    );
+
+    expect([valores.producto, valores.carencia_dias, valores.costo]).toEqual([
+      'Mancozeb',
+      '21',
+      '35000',
+    ]);
   });
 });

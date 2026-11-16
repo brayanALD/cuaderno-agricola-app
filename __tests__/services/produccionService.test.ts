@@ -79,6 +79,11 @@ describe('produccionDeLote (criterio de aceptación 2)', () => {
   it('un lote sin cosechas tiene total 0', async () => {
     const ctx = await contextoConLote();
 
-    expect(await produccionDeLote(ctx, 'id-1')).toEqual({ totalKg: 0, porMes: [] });
+    expect(await produccionDeLote(ctx, 'id-1')).toEqual({
+      totalKg: 0,
+      porMes: [],
+      costoTotal: 0,
+      costoPorKg: null,
+    });
   });
 });

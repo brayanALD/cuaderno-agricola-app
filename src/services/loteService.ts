@@ -1,4 +1,5 @@
 import type { LoteFila } from '@/db/modelo';
+import { marcarCiclosDeLoteBorrados } from '@/repositories/cicloRepository';
 import { encolarFotosDeLote } from '@/repositories/fotoRepository';
 import { listarLaboresDeLote, marcarLaboresDeLoteBorradas } from '@/repositories/laborRepository';
 import {
@@ -88,6 +89,7 @@ export async function borrarLote(ctx: Contexto, id: string): Promise<boolean> {
     // Las imágenes del servidor se encolan ANTES de marcar las labores como borradas (D85).
     await encolarFotosDeLote(ctx.db, id);
     await marcarLaboresDeLoteBorradas(ctx.db, id, ahora);
+    await marcarCiclosDeLoteBorrados(ctx.db, id, ahora);
   });
   if (borrado) {
     for (const labor of labores) {

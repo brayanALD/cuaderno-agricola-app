@@ -2,7 +2,7 @@ import { ErrorApi, ErrorDeRed } from '@/api/errores';
 import type { CuerpoBinario } from '@/api/cliente';
 import type { ClienteSync } from '@/services/sincronizacionService';
 
-export type Recurso = 'lotes' | 'labores';
+export type Recurso = 'lotes' | 'labores' | 'ciclos';
 export type DocRemoto = Record<string, unknown> & {
   id: string;
   created_at: string;
@@ -12,8 +12,31 @@ export type DocRemoto = Record<string, unknown> & {
 
 /** Los campos que la API acepta en cada `PUT` (sección 9.3–9.4): ni uno más ni uno menos. */
 const CAMPOS: Record<Recurso, readonly string[]> = {
-  lotes: ['nombre', 'cultivo', 'area_m2', 'altitud_m', 'lat', 'lng', 'fecha_siembra'],
-  labores: ['lote_id', 'tipo', 'fecha', 'cantidad', 'unidad', 'nota', 'foto_url', 'luz'],
+  lotes: ['nombre', 'cultivo', 'area_m2', 'altitud_m', 'lat', 'lng', 'fecha_siembra', 'finca'],
+  labores: [
+    'lote_id',
+    'tipo',
+    'fecha',
+    'cantidad',
+    'unidad',
+    'nota',
+    'foto_url',
+    'luz',
+    'producto',
+    'carencia_dias',
+    'costo',
+  ],
+  ciclos: ['lote_id', 'cultivo', 'fecha_inicio', 'fecha_fin', 'total_kg'],
+};
+
+const esRecurso = (texto: string | undefined): texto is Recurso =>
+  texto === 'lotes' || texto === 'labores' || texto === 'ciclos';
+
+/** Campos añadidos después (D95): la API los acepta ausentes y los guarda como `null` (clientes antiguos). */
+const OPCIONALES: Record<Recurso, readonly string[]> = {
+  lotes: ['finca'],
+  labores: ['producto', 'carencia_dias', 'costo'],
+  ciclos: [],
 };
 
 /** Misma regla que la API (D61): sin distinguir mayúsculas ASCII ni espacios en los extremos. */
@@ -41,6 +64,7 @@ export function crearServidorFalso() {
   const colecciones: Record<Recurso, Map<string, DocRemoto>> = {
     lotes: new Map(),
     labores: new Map(),
+    ciclos: new Map(),
   };
   const llamadas: LlamadaRegistrada[] = [];
   const imagenes = new Map<string, Uint8Array>();
@@ -57,26 +81,38 @@ export function crearServidorFalso() {
   const invalido = (campo: string, mensaje: string) =>
     new ErrorApi(400, 'Datos inválidos', [{ campo, mensaje }]);
 
-  function guardar(recurso: Recurso, id: string, cuerpo: unknown): DocRemoto {
-    const datos = (cuerpo ?? {}) as Record<string, unknown>;
+  /** Solo los campos declarados; los opcionales que falten valen `null`. */
+  function normalizar(recurso: Recurso, cuerpo: unknown): Record<string, unknown> {
+    const datos: Record<string, unknown> = { ...((cuerpo ?? {}) as Record<string, unknown>) };
+    for (const campo of OPCIONALES[recurso]) datos[campo] ??= null;
     const claves = Object.keys(datos).sort().join(',');
     if (claves !== [...CAMPOS[recurso]].sort().join(',')) {
       throw invalido('cuerpo', `Campos inesperados o faltantes: ${claves}`);
     }
-    if (recurso === 'lotes') {
-      const repetido = [...colecciones.lotes.values()].some(
-        (otro) =>
-          otro.id !== id &&
-          otro.deleted_at === null &&
-          claveDeNombre(otro.nombre) === claveDeNombre(datos.nombre),
-      );
-      if (repetido) throw new ErrorApi(409, 'Ya existe un lote con ese nombre.');
-    } else {
-      const lote = colecciones.lotes.get(String(datos.lote_id));
-      if (lote === undefined || lote.deleted_at !== null) {
-        throw invalido('lote_id', 'El lote no existe.');
-      }
-    }
+    return datos;
+  }
+
+  function exigirNombreLibre(id: string, nombre: unknown): void {
+    const repetido = [...colecciones.lotes.values()].some(
+      (otro) =>
+        otro.id !== id &&
+        otro.deleted_at === null &&
+        claveDeNombre(otro.nombre) === claveDeNombre(nombre),
+    );
+    if (repetido) throw new ErrorApi(409, 'Ya existe un lote con ese nombre.');
+  }
+
+  /** Una labor exige un lote vivo; un ciclo cerrado es historial y basta con que el lote exista. */
+  function exigirLote(recurso: Recurso, loteId: unknown): void {
+    const lote = colecciones.lotes.get(String(loteId));
+    const sirve = lote !== undefined && (recurso === 'ciclos' || lote.deleted_at === null);
+    if (!sirve) throw invalido('lote_id', 'El lote no existe.');
+  }
+
+  function guardar(recurso: Recurso, id: string, cuerpo: unknown): DocRemoto {
+    const datos = normalizar(recurso, cuerpo);
+    if (recurso === 'lotes') exigirNombreLibre(id, datos.nombre);
+    else exigirLote(recurso, datos.lote_id);
     const previo = colecciones[recurso].get(id);
     const marca = ahora();
     const doc: DocRemoto = {
@@ -141,7 +177,7 @@ export function crearServidorFalso() {
     if (recurso === 'imagenes') {
       return metodo === 'POST' ? subirImagen(binario) : borrarImagen(consulta);
     }
-    if (recurso !== 'lotes' && recurso !== 'labores') throw new ErrorApi(404, 'No encontrado');
+    if (!esRecurso(recurso)) throw new ErrorApi(404, 'No encontrado');
     if (metodo === 'GET') return listar(recurso, new URLSearchParams(consulta).get('since'));
     if (id === undefined) throw new ErrorApi(404, 'No encontrado');
     return metodo === 'PUT' ? guardar(recurso, id, cuerpo) : borrar(recurso, id);
@@ -163,6 +199,7 @@ export function crearServidorFalso() {
     estado,
     lotes: colecciones.lotes,
     labores: colecciones.labores,
+    ciclos: colecciones.ciclos,
     /** Imágenes subidas: URL → bytes. */
     imagenes,
     /** Mete un documento tal cual, saltándose las reglas (datos «de otro dispositivo» o corruptos). */

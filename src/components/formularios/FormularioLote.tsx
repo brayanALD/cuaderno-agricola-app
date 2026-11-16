@@ -14,6 +14,7 @@ import { SeccionUbicacion } from './SeccionUbicacion';
 const CAMPOS = [
   'nombre',
   'cultivo',
+  'finca',
   'area_m2',
   'altitud_m',
   'lat',

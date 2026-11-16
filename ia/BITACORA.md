@@ -541,3 +541,11 @@ Validación: qué se ejecutó (check, pruebas, dispositivo) y su resultado real
 Decisión: qué se aceptó, qué se cambió y por qué
 Rechazos/correcciones: …
 ```
+
+
+## 2026-11-16 · Sesión 17 · Cuaderno agrícola A1–A4 (D95)
+Propósito: finca y ciclos de cultivo, periodo de carencia, costos y reportes PDF/CSV.
+Evidencia: migración 5, `cicloService`, `carencia`, `reporteService`, `reportesReal`, `FormularioCiclo`, pantalla `lote/ciclo/[id]`, campos nuevos en los formularios; API: recurso `ciclos` y campos opcionales.
+Validación: `npm run check` en verde (849 pruebas en la app) y `expo-doctor` 20/20; API 163 pruebas. Compartir PDF/CSV solo se puede probar en un teléfono con una versión nueva del APK. El despliegue del API a producción queda pendiente de autorización.
+Decisión: D95 (app) y D93 (API). Campos opcionales con `null` para clientes antiguos; carencia solo avisa.
+Rechazos/correcciones: `trim()` quitaba el BOM del CSV en una prueba; el nombre de archivo convertía las tildes en guiones.

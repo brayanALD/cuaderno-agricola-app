@@ -19,6 +19,7 @@ const comoTexto = (valor: number | null): string => (valor === null ? '' : Strin
 export interface ValoresLote {
   nombre: string;
   cultivo: string;
+  finca: string;
   area_m2: string;
   altitud_m: string;
   lat: string;
@@ -29,6 +30,7 @@ export interface ValoresLote {
 export const valoresLoteVacios = (hoy: string): ValoresLote => ({
   nombre: '',
   cultivo: '',
+  finca: '',
   area_m2: '',
   altitud_m: '',
   lat: '',
@@ -40,6 +42,7 @@ export function valoresDesdeLote(lote: LoteFila): ValoresLote {
   return {
     nombre: lote.nombre,
     cultivo: lote.cultivo,
+    finca: lote.finca ?? '',
     area_m2: String(lote.area_m2),
     altitud_m: comoTexto(lote.altitud_m),
     lat: comoTexto(lote.lat),
@@ -52,6 +55,7 @@ export function aDatosLote(valores: ValoresLote): z.input<typeof loteSchema> {
   return {
     nombre: valores.nombre,
     cultivo: valores.cultivo,
+    finca: valores.finca,
     area_m2: aNumero(valores.area_m2),
     altitud_m: aNumeroONulo(valores.altitud_m),
     lat: aNumeroONulo(valores.lat),
@@ -65,6 +69,7 @@ export const esquemaFormularioLote = z
   .object({
     nombre: z.string(),
     cultivo: z.string(),
+    finca: z.string(),
     area_m2: z.string(),
     altitud_m: z.string(),
     lat: z.string(),
@@ -82,6 +87,10 @@ export interface ValoresLabor {
   nota: string;
   luz: Luz | null;
   foto_uri: string | null;
+  /** Producto, días de carencia y costo se escriben como texto (vacío = sin dato) (D95). */
+  producto: string;
+  carencia_dias: string;
+  costo: string;
 }
 
 /** Una labor nueva empieza en «riego», de hoy: nunca queda un tipo sin elegir. */
@@ -93,6 +102,9 @@ export const valoresLaborVacios = (hoy: string): ValoresLabor => ({
   nota: '',
   luz: null,
   foto_uri: null,
+  producto: '',
+  carencia_dias: '',
+  costo: '',
 });
 
 export function valoresDesdeLabor(labor: LaborFila): ValoresLabor {
@@ -104,10 +116,16 @@ export function valoresDesdeLabor(labor: LaborFila): ValoresLabor {
     nota: labor.nota ?? '',
     luz: labor.luz,
     foto_uri: labor.foto_uri,
+    producto: labor.producto ?? '',
+    carencia_dias: comoTexto(labor.carencia_dias),
+    costo: comoTexto(labor.costo),
   };
 }
 
 const textoONulo = (texto: string): string | null => (texto.trim() === '' ? null : texto.trim());
+
+/** Tipos de labor en los que se aplica un producto (D95). */
+export const conProducto = (tipo: TipoLabor): boolean => tipo === 'fumigacion' || tipo === 'abono';
 
 type EntradaLabor = z.input<ReturnType<typeof crearLaborSchema>>;
 
@@ -120,6 +138,10 @@ export function aDatosLabor(valores: ValoresLabor): EntradaLabor {
     nota: textoONulo(valores.nota),
     luz: valores.luz,
     foto_uri: valores.foto_uri,
+    // El producto solo aplica a fumigación y abono, y la carencia solo a fumigación: fuera de ahí se descartan.
+    producto: conProducto(valores.tipo) ? valores.producto : null,
+    carencia_dias: valores.tipo === 'fumigacion' ? aNumeroONulo(valores.carencia_dias) : null,
+    costo: aNumeroONulo(valores.costo),
   };
 }
 
@@ -134,6 +156,9 @@ export function crearEsquemaFormularioLabor(contexto: ContextoLabor) {
       nota: z.string(),
       luz: z.enum(['soleado', 'nublado']).nullable(),
       foto_uri: z.string().nullable(),
+      producto: z.string(),
+      carencia_dias: z.string(),
+      costo: z.string(),
     })
     .transform(aDatosLabor)
     .pipe(crearLaborSchema(contexto));

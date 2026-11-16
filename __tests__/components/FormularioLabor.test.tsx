@@ -100,6 +100,9 @@ describe('FormularioLabor', () => {
       nota: 'Goteo',
       luz: 'soleado',
       foto_uri: null,
+      producto: null,
+      carencia_dias: null,
+      costo: null,
     });
   });
 

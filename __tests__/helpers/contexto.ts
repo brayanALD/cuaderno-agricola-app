@@ -3,6 +3,7 @@ import { AHORA } from './filas';
 import { crearDbMigrada } from './baseEnMemoria';
 import { crearFotosEnMemoria } from './fotosEnMemoria';
 import { crearNotificacionesEnMemoria } from './notificacionesEnMemoria';
+import { crearReportesEnMemoria } from './reportesEnMemoria';
 
 export const HOY = '2026-11-14';
 
@@ -14,6 +15,7 @@ export async function crearContextoDePrueba(): Promise<Contexto> {
     db,
     fotos: crearFotosEnMemoria(),
     notificaciones: crearNotificacionesEnMemoria(),
+    reportes: crearReportesEnMemoria(),
     nuevoId: () => `id-${++contador}`,
     ahora: () => AHORA,
     hoy: () => HOY,

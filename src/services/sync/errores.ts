@@ -1,6 +1,6 @@
 import { ErrorApi } from '@/api/errores';
 
-export type Entidad = 'lote' | 'labor';
+export type Entidad = 'lote' | 'labor' | 'ciclo';
 
 export const MENSAJE_NOMBRE_REPETIDO =
   'Ya existe otro lote con ese nombre en tu cuenta (quizá lo creaste en otro dispositivo). Cámbiale el nombre para sincronizarlo.';
@@ -16,7 +16,7 @@ const esGeneral = (error: ErrorApi): boolean =>
 export function mensajeDeFila(error: unknown, entidad: Entidad): string {
   if (!(error instanceof ErrorApi) || esGeneral(error)) throw error;
   if (entidad === 'lote' && error.status === 409) return MENSAJE_NOMBRE_REPETIDO;
-  const rechazo = entidad === 'lote' ? 'El servidor lo rechazó' : 'El servidor la rechazó';
+  const rechazo = entidad === 'labor' ? 'El servidor la rechazó' : 'El servidor lo rechazó';
   const detalle = error.status === 400 ? error.detalles[0]?.mensaje : undefined;
   return detalle === undefined
     ? `${rechazo} (código ${String(error.status)}).`

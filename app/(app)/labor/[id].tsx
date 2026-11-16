@@ -4,7 +4,7 @@ import { Pantalla } from '@/components/Pantalla';
 import { Vista } from '@/components/Vista';
 import { useAcciones } from '@/hooks/useAcciones';
 import { useHoy } from '@/hooks/useHoy';
-import { useLabor } from '@/hooks/useLabores';
+import { useCarencia, useLabor } from '@/hooks/useLabores';
 import { useLote } from '@/hooks/useLotes';
 import { valoresDesdeLabor } from '@/services/formularios';
 import type { LaborFila } from '@/db/modelo';
@@ -14,6 +14,7 @@ function EditorDeLabor({ labor }: { readonly labor: LaborFila }) {
   const lote = useLote(labor.lote_id);
   const { actualizarLabor } = useAcciones();
   const hoy = useHoy();
+  const carencia = useCarencia(labor.lote_id, labor.id);
   return (
     <Vista
       carga={lote}
@@ -28,6 +29,7 @@ function EditorDeLabor({ labor }: { readonly labor: LaborFila }) {
           fechaSiembra={datos.fecha_siembra}
           valoresIniciales={valoresDesdeLabor(labor)}
           hoy={hoy}
+          carencia={carencia.vista.estado === 'listo' ? carencia.vista.datos : null}
           textoBoton="Guardar cambios"
           alGuardar={(cambios) => actualizarLabor(labor.id, cambios)}
           alTerminar={() => router.back()}

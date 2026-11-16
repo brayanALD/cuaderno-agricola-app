@@ -18,6 +18,9 @@ const CAMPOS = [
   'deleted_at',
   'pending',
   'sync_error',
+  'producto',
+  'carencia_dias',
+  'costo',
 ] as const;
 
 const COLUMNAS = CAMPOS.join(', ');
@@ -38,7 +41,8 @@ export async function insertarLabor(db: Db, labor: LaborFila): Promise<void> {
 export async function actualizarLabor(db: Db, labor: LaborFila): Promise<number> {
   const resultado = await db.runAsync(
     `UPDATE labor SET tipo = ?, fecha = ?, cantidad = ?, unidad = ?, nota = ?, foto_uri = ?,
-       foto_url = ?, luz = ?, updated_at = ?, pending = ?, sync_error = ?
+       foto_url = ?, luz = ?, updated_at = ?, pending = ?, sync_error = ?, producto = ?,
+       carencia_dias = ?, costo = ?
      WHERE id = ? AND deleted_at IS NULL`,
     [
       labor.tipo,
@@ -52,6 +56,9 @@ export async function actualizarLabor(db: Db, labor: LaborFila): Promise<number>
       labor.updated_at,
       labor.pending,
       labor.sync_error,
+      labor.producto,
+      labor.carencia_dias,
+      labor.costo,
       labor.id,
     ],
   );
@@ -114,15 +121,28 @@ export async function marcarLaboresDeLoteBorradas(
   return resultado.changes;
 }
 
+/** Cosechas vivas del lote desde `desde` (inclusive): las del ciclo en curso si `desde` es la siembra (D95). */
 export function listarCosechasDeLote(
   db: Db,
   loteId: string,
+  desde = '',
 ): Promise<{ fecha: string; cantidad: number }[]> {
   return db.getAllAsync(
     `SELECT fecha, cantidad FROM labor
-     WHERE lote_id = ? AND tipo = 'cosecha' AND deleted_at IS NULL ORDER BY fecha, id`,
-    [loteId],
+     WHERE lote_id = ? AND tipo = 'cosecha' AND deleted_at IS NULL AND fecha >= ?
+     ORDER BY fecha, id`,
+    [loteId, desde],
   );
+}
+
+/** Suma de los costos de las labores vivas del lote desde `desde` (inclusive) (D95). */
+export async function sumarCostosDeLote(db: Db, loteId: string, desde = ''): Promise<number> {
+  const fila = await db.getFirstAsync<{ total: number }>(
+    `SELECT COALESCE(SUM(costo), 0) AS total FROM labor
+     WHERE lote_id = ? AND deleted_at IS NULL AND fecha >= ?`,
+    [loteId, desde],
+  );
+  return fila?.total ?? 0;
 }
 
 /**
@@ -171,11 +191,12 @@ export async function marcarLaborConError(
 export async function guardarLaborRemota(db: Db, labor: LaborRemota): Promise<number> {
   const resultado = await db.runAsync(
     `INSERT INTO labor (id, lote_id, tipo, fecha, cantidad, unidad, nota, foto_url, luz,
-       created_at, updated_at, deleted_at, pending, sync_error)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL)
+       created_at, updated_at, deleted_at, pending, sync_error, producto, carencia_dias, costo)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET lote_id = excluded.lote_id, tipo = excluded.tipo,
        fecha = excluded.fecha, cantidad = excluded.cantidad, unidad = excluded.unidad,
        nota = excluded.nota, foto_url = excluded.foto_url, luz = excluded.luz,
+       producto = excluded.producto, carencia_dias = excluded.carencia_dias, costo = excluded.costo,
        created_at = excluded.created_at, updated_at = excluded.updated_at,
        deleted_at = excluded.deleted_at, pending = 0, sync_error = NULL
      WHERE labor.pending = 0`,
@@ -192,6 +213,9 @@ export async function guardarLaborRemota(db: Db, labor: LaborRemota): Promise<nu
       labor.created_at,
       labor.updated_at,
       labor.deleted_at,
+      labor.producto,
+      labor.carencia_dias,
+      labor.costo,
     ],
   );
   return resultado.changes;

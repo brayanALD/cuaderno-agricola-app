@@ -3,12 +3,12 @@ import type { Db } from '@/db/tipos';
 import { patronLike } from './like';
 
 const COLUMNAS =
-  'id, nombre, cultivo, area_m2, altitud_m, lat, lng, fecha_siembra, created_at, updated_at, deleted_at, pending, sync_error';
+  'id, nombre, cultivo, area_m2, altitud_m, lat, lng, fecha_siembra, created_at, updated_at, deleted_at, pending, sync_error, finca';
 const ORDEN = 'ORDER BY nombre COLLATE NOCASE, id';
 
 export async function insertarLote(db: Db, lote: LoteFila): Promise<void> {
   await db.runAsync(
-    `INSERT INTO lote (${COLUMNAS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO lote (${COLUMNAS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       lote.id,
       lote.nombre,
@@ -23,6 +23,7 @@ export async function insertarLote(db: Db, lote: LoteFila): Promise<void> {
       lote.deleted_at,
       lote.pending,
       lote.sync_error,
+      lote.finca,
     ],
   );
 }
@@ -31,7 +32,7 @@ export async function insertarLote(db: Db, lote: LoteFila): Promise<void> {
 export async function actualizarLote(db: Db, lote: LoteFila): Promise<number> {
   const resultado = await db.runAsync(
     `UPDATE lote SET nombre = ?, cultivo = ?, area_m2 = ?, altitud_m = ?, lat = ?, lng = ?,
-       fecha_siembra = ?, updated_at = ?, pending = ?, sync_error = ?
+       fecha_siembra = ?, updated_at = ?, pending = ?, sync_error = ?, finca = ?
      WHERE id = ? AND deleted_at IS NULL`,
     [
       lote.nombre,
@@ -44,6 +45,7 @@ export async function actualizarLote(db: Db, lote: LoteFila): Promise<number> {
       lote.updated_at,
       lote.pending,
       lote.sync_error,
+      lote.finca,
       lote.id,
     ],
   );
@@ -57,7 +59,7 @@ export function obtenerLote(db: Db, id: string): Promise<LoteFila | null> {
   );
 }
 
-/** Lotes vivos por nombre; con `texto`, los que lo contienen en el nombre o en el cultivo (D39). */
+/** Lotes vivos por nombre; con `texto`, los que lo contienen en el nombre, el cultivo o la finca (D39, D95). */
 export function listarLotes(db: Db, texto?: string): Promise<LoteFila[]> {
   if (texto === undefined || texto.trim() === '') {
     return db.getAllAsync<LoteFila>(
@@ -67,9 +69,10 @@ export function listarLotes(db: Db, texto?: string): Promise<LoteFila[]> {
   const patron = patronLike(texto);
   return db.getAllAsync<LoteFila>(
     `SELECT ${COLUMNAS} FROM lote
-     WHERE deleted_at IS NULL AND (nombre LIKE ? ESCAPE '\\' OR cultivo LIKE ? ESCAPE '\\')
+     WHERE deleted_at IS NULL
+       AND (nombre LIKE ? ESCAPE '\\' OR cultivo LIKE ? ESCAPE '\\' OR finca LIKE ? ESCAPE '\\')
      ${ORDEN}`,
-    [patron, patron],
+    [patron, patron, patron],
   );
 }
 
@@ -167,8 +170,9 @@ export function buscarLoteVivoConNombre(
  */
 export async function guardarLoteRemoto(db: Db, lote: LoteRemoto): Promise<number> {
   const resultado = await db.runAsync(
-    `INSERT INTO lote (${COLUMNAS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL)
+    `INSERT INTO lote (${COLUMNAS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL, ?)
      ON CONFLICT(id) DO UPDATE SET nombre = excluded.nombre, cultivo = excluded.cultivo,
+       finca = excluded.finca,
        area_m2 = excluded.area_m2, altitud_m = excluded.altitud_m, lat = excluded.lat,
        lng = excluded.lng, fecha_siembra = excluded.fecha_siembra, created_at = excluded.created_at,
        updated_at = excluded.updated_at, deleted_at = excluded.deleted_at, pending = 0,
@@ -186,6 +190,7 @@ export async function guardarLoteRemoto(db: Db, lote: LoteRemoto): Promise<numbe
       lote.created_at,
       lote.updated_at,
       lote.deleted_at,
+      lote.finca,
     ],
   );
   return resultado.changes;

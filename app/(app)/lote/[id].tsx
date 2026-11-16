@@ -33,6 +33,7 @@ export default function DetalleDeLote() {
             alCambiarDeLote={cambiarDeLote}
             alEditar={() => router.push({ pathname: '/lote/editar/[id]', params: { id } })}
             alBorrar={borrarLote}
+            alCerrarCiclo={() => router.push({ pathname: '/lote/ciclo/[id]', params: { id } })}
             alRegistrarLabor={() => router.push({ pathname: '/labor/nueva', params: { lote: id } })}
           />
         }

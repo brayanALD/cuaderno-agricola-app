@@ -48,6 +48,7 @@ export default function DisposicionPrivada() {
           <Stack.Screen name="lote/nuevo" options={{ title: 'Nuevo lote' }} />
           <Stack.Screen name="lote/[id]" options={{ title: 'Lote' }} />
           <Stack.Screen name="lote/editar/[id]" options={{ title: 'Editar lote' }} />
+          <Stack.Screen name="lote/ciclo/[id]" options={{ title: 'Cerrar ciclo' }} />
           <Stack.Screen name="labor/nueva" options={{ title: 'Nueva labor' }} />
           <Stack.Screen name="labor/[id]" options={{ title: 'Editar labor' }} />
           <Stack.Screen name="foto/[id]" options={{ title: 'Foto', presentation: 'modal' }} />

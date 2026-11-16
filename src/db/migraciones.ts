@@ -66,8 +66,39 @@ const MIGRACION_4 = `
 CREATE TABLE ajustes (clave TEXT PRIMARY KEY, valor TEXT NOT NULL);
 `;
 
+/**
+ * v5: funciones de cuaderno agrícola (D95). Finca del lote, producto / días de carencia / costo de la labor y
+ * la tabla `ciclo` con los ciclos de cultivo YA CERRADOS de cada lote (el ciclo en curso es el del propio lote).
+ */
+const MIGRACION_5 = `
+ALTER TABLE lote ADD COLUMN finca TEXT;
+ALTER TABLE labor ADD COLUMN producto TEXT;
+ALTER TABLE labor ADD COLUMN carencia_dias INTEGER CHECK (carencia_dias BETWEEN 0 AND 365);
+ALTER TABLE labor ADD COLUMN costo REAL CHECK (costo >= 0);
+CREATE TABLE ciclo (
+  id TEXT PRIMARY KEY,
+  lote_id TEXT NOT NULL REFERENCES lote(id) ON DELETE CASCADE,
+  cultivo TEXT NOT NULL,
+  fecha_inicio TEXT NOT NULL,
+  fecha_fin TEXT NOT NULL,
+  total_kg REAL NOT NULL DEFAULT 0 CHECK (total_kg >= 0),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  deleted_at TEXT,
+  pending INTEGER NOT NULL DEFAULT 0 CHECK (pending IN (0, 1)),
+  sync_error TEXT
+);
+CREATE INDEX idx_ciclo_lote ON ciclo (lote_id, fecha_fin);
+`;
+
 /** El índice `i` lleva la base de la versión `i` a la `i + 1`. Nunca se editan las ya publicadas. */
-const MIGRACIONES: readonly string[] = [MIGRACION_1, MIGRACION_2, MIGRACION_3, MIGRACION_4];
+const MIGRACIONES: readonly string[] = [
+  MIGRACION_1,
+  MIGRACION_2,
+  MIGRACION_3,
+  MIGRACION_4,
+  MIGRACION_5,
+];
 
 export const VERSION_ESQUEMA = MIGRACIONES.length;
 

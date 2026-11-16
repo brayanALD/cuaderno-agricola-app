@@ -51,17 +51,21 @@ describe('sincronizar: enviar lo pendiente', () => {
       'area_m2',
       'cultivo',
       'fecha_siembra',
+      'finca',
       'lat',
       'lng',
       'nombre',
     ]);
     expect(Object.keys(labor?.cuerpo as object).sort()).toEqual([
       'cantidad',
+      'carencia_dias',
+      'costo',
       'fecha',
       'foto_url',
       'lote_id',
       'luz',
       'nota',
+      'producto',
       'tipo',
       'unidad',
     ]);

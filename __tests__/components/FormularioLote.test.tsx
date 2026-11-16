@@ -116,6 +116,7 @@ describe('FormularioLote: guardado', () => {
       lat: null,
       lng: null,
       fecha_siembra: HOY,
+      finca: null,
     });
   });
 

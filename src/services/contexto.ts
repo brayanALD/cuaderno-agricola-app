@@ -1,6 +1,7 @@
 import type { Db } from '@/db/tipos';
 import type { PuertoFotos } from './fotos';
 import type { PuertoNotificaciones } from './notificaciones';
+import type { PuertoReportes } from './reportes';
 
 /**
  * Todo lo que un servicio necesita del mundo exterior. Inyectarlo (en vez de leer el reloj o
@@ -12,6 +13,8 @@ export interface Contexto {
   readonly fotos: PuertoFotos;
   /** Avisos locales del recordatorio de riego (D90). */
   readonly notificaciones: PuertoNotificaciones;
+  /** Reportes en PDF y CSV para compartir (D95). */
+  readonly reportes: PuertoReportes;
   /** UUID nuevo (D33: `expo-crypto`). */
   readonly nuevoId: () => string;
   /** Instante actual en ISO 8601 UTC con milisegundos. */

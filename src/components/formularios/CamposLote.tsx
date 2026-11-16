@@ -17,6 +17,13 @@ export function CamposLote({ control, hoy }: Props) {
       <CampoControlado control={control} name="cultivo" etiqueta="Cultivo" />
       <CampoControlado
         control={control}
+        name="finca"
+        etiqueta="Finca (opcional)"
+        ayuda="Sirve para agrupar y buscar los lotes de una misma finca."
+        maxLength={60}
+      />
+      <CampoControlado
+        control={control}
         name="area_m2"
         etiqueta="Área (m²)"
         teclado="numeric"

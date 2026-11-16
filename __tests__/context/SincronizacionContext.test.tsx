@@ -87,7 +87,7 @@ describe('sincronización automática (D71)', () => {
     await dejarCorrer(1);
 
     expect(servidor.lotes.size).toBe(2);
-    expect(obtenciones(servidor) - antes).toBe(2); // una vuelta = lotes + labores
+    expect(obtenciones(servidor) - antes).toBe(3); // una vuelta = lotes + ciclos + labores
   });
 
   it('el contador de pendientes sube con un cambio del usuario y baja al sincronizar', async () => {

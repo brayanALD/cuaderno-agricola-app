@@ -2,6 +2,7 @@ import { randomUUID } from 'expo-crypto';
 import { abrirBaseDeDatos, borrarBaseAntigua } from '@/db/expo';
 import { fotosReal } from './fotosReal';
 import { notificacionesReal } from './notificacionesReal';
+import { reportesReal } from './reportesReal';
 import type { Contexto } from '@/services/contexto';
 import { fechaLocalISO } from '@/services/fechas';
 
@@ -16,6 +17,7 @@ export async function abrirContextoReal(uid: string): Promise<Contexto> {
     db,
     fotos: fotosReal,
     notificaciones: notificacionesReal,
+    reportes: reportesReal,
     nuevoId: () => randomUUID(),
     ahora: () => new Date().toISOString(),
     hoy: () => fechaLocalISO(new Date()),

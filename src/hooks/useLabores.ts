@@ -1,8 +1,11 @@
 import { useCallback } from 'react';
-import type { LaborFila } from '@/db/modelo';
+import type { CicloFila, LaborFila } from '@/db/modelo';
 import { buscarSoloLabores } from '@/services/busquedaService';
 import type { Contexto } from '@/services/contexto';
+import type { Carencia } from '@/services/carencia';
+import { listarCiclos } from '@/services/cicloService';
 import {
+  carenciaDeLote,
   listarLaboresDeLote,
   listarLaboresRecientes,
   obtenerLabor,
@@ -14,7 +17,9 @@ import type { Sugerencia } from '@/services/proximaLabor';
 import { produccionDeLote, type Produccion } from '@/services/produccionService';
 import { listaVacia, useCarga, type Carga } from './useCarga';
 
-const sinCosechas = (produccion: Produccion): boolean => produccion.porMes.length === 0;
+/** Sin cosechas y sin costos no hay nada que mostrar. */
+const sinCosechas = (produccion: Produccion): boolean =>
+  produccion.porMes.length === 0 && produccion.costoTotal === 0;
 
 /** Labores que contienen el texto en su tipo o su nota; conserva los resultados mientras se escribe. */
 export function useBusquedaDeLabores(texto: string): Carga<LaborFila[]> {
@@ -53,4 +58,19 @@ export function useProduccion(loteId: string): Carga<Produccion> {
 export function useProximaLabor(loteId: string): Carga<Sugerencia> {
   const cargar = useCallback((ctx: Contexto) => proximaLaborDeLote(ctx, loteId), [loteId]);
   return useCarga(cargar);
+}
+
+/** Periodo de carencia del lote (D95); «vacío» si ninguna labor lo tiene. */
+export function useCarencia(loteId: string, excluirId?: string): Carga<Carencia> {
+  const cargar = useCallback(
+    (ctx: Contexto) => carenciaDeLote(ctx, loteId, excluirId),
+    [loteId, excluirId],
+  );
+  return useCarga(cargar);
+}
+
+/** Ciclos de cultivo ya cerrados del lote (D95). */
+export function useCiclos(loteId: string): Carga<CicloFila[]> {
+  const cargar = useCallback((ctx: Contexto) => listarCiclos(ctx, loteId), [loteId]);
+  return useCarga(cargar, listaVacia);
 }
