@@ -9,9 +9,10 @@
     "icon": "./assets/icon.png",
     "android": {
       "package": "com.cuadernoagricola.app",
-      "versionCode": 2,
+      "versionCode": 3,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
+        "monochromeImage": "./assets/monochrome-icon.png",
         "backgroundColor": "#0B6E4F"
       },
       "permissions": ["android.permission.CAMERA"],
