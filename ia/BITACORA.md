@@ -498,6 +498,21 @@ inexistente, 400 con correo inválido o cuerpo no JSON. **Redmi A2:** el login m
 Rechazos/correcciones (míos): la etiqueta del ojo salió «Mostrar Repite la contraseña» (confuso para TalkBack): se añadió `secretoDe` («Mostrar la confirmación»); dos componentes
 pasaron de las 50 líneas del linter y se dividieron.
 
+## 2026-11-16 · Sesión 15 · Primer APK con EAS Build
+
+Propósito: compilar el APK, instalarlo y repetir en él lo que Expo Go no permitía. Brayan pidió expresamente que la IA lanzara el build (la regla de `AGENTS.md` la prohíbe por defecto; la configuración no lo bloqueó).
+
+Evidencia: `eas init --account aldanam4r` (proyecto `@aldanam4r/cuaderno-agricola`, commit «Vincula el proyecto con EAS»), `eas build -p android --profile preview`
+(keystore generado por EAS; build `381c99a3-…`, 20:14 → 20:46, 118 MB). APK instalado por `adb install` en el Redmi A2 (paquete `com.cuadernoagricola.app`).
+
+Validación (Redmi A2, APK sin Metro): arranca sin cierres (`logcat` sin `FATAL EXCEPTION`); los iconos cargan (el arreglo de `expo-font` funcionó); login con una cuenta temporal de
+producción; **notificaciones: sale el diálogo de permiso del sistema, se concede y el interruptor queda activo** (en Expo Go no se podía); **arranque sin conexión: con modo avión
+la app abre directamente en «Lotes»** (sesión restaurada sin red). Tras la prueba se desactivó el modo avión.
+**No probado:** el A35 (sin `adb` en esta tanda), cámara y luz en el APK, el aviso real de riego (sin lotes vencidos en la cuenta temporal) y la foto entre teléfonos.
+
+Notas: la descarga con `fetch` de Node se cortó (`ECONNRESET`); funcionó `Invoke-WebRequest`. Al iniciar sesión Android ofrece guardar la contraseña en Google (por los `autoComplete`). La cuenta
+de prueba anterior (`prueba.campo@example.com`) ya no existía (la borró Brayan); se creó `apk.prueba@example.com`, que conviene borrar al final.
+
 ## Plantilla para próximas entradas
 
 ```text
