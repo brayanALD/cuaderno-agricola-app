@@ -464,7 +464,7 @@ Evidencia: `.env.local` de la app (creado por Brayan como excepción a la regla 
 Brayan reinició Metro con `-c`; el bundle trae la URL nueva y ninguna IP local.
 
 Validación (Redmi A2): la sesión del emulador dejó de valer y la app mostró el login; registré la cuenta de prueba `prueba.campo@example.com`
-(contraseña `Campo2026`: el teclado de `adb` descartó el «!» que quise poner), creé el lote «Finca produccion» y una labor de riego con foto de mi imagen
+(con una contraseña de prueba; el teclado de `adb` descartó un carácter especial que quise poner), creé el lote «Finca produccion» y una labor de riego con foto de mi imagen
 de prueba. En producción llegaron el lote, la labor y la foto: la URL del Blob responde 200 con un JPEG de 82 KB (reducido desde 456 KB).
 **No probado:** ver esa foto en otro teléfono (el A35 estaba desconectado de `adb`), notificaciones y cámara contra producción, y el APK.
 
